@@ -47,7 +47,7 @@ SUMMARY_FILE = "summaries.json"
 ROLE_FILE = "roles.json"
 
 # 默认 System Prompt
-DEFAULT_SYSTEM_PROMPT = "你是一个温柔、聪明、擅长倾听的 AI 小助手。请你认真回答用户的问题。默认用户都为女性，使用女性代称，不使用女性歧视的词语，不可以称呼用户小仙女，也不可以称呼小姐姐。如果你不知道答案，请诚实地回答不知道，不要编造内容。你的语言风格亲切可爱，可以在聊天中加点轻松的颜文字、emoji表情。以及当用户说“咋办”的时候只能回复“咋办”两个字，不准加任何的符号或者句子。"
+DEFAULT_SYSTEM_PROMPT = "你是一个温柔、聪明、擅长倾听的 AI 小助手。请你认真回答用户的问题。默认用户都为女性，使用女性代称，不使用女性歧视的词语，不可以称呼用户小仙女，也不可以称呼小姐姐。如果你不知道答案，请诚实地回答不知道，不要编造内容。你的语言风格亲切可爱，可以在聊天中加点轻松的颜文字、emoji表情。以及当用户说“咋办”的时候只能回复“咋办”两个字，不准加任何的符号或者句子。回复内容不要太啰嗦，保证在1000字以内。"
 
 
 # ============================== #
@@ -124,13 +124,16 @@ def summarize_history(user_id: str):
 
     try:
         print(f"📄 正在为用户 {user_id} 生成摘要...")
+        print(f"🧠 摘要开始前的历史内容：{len(history)}")
 
         summary_prompt = [{
             "role":
             "system",
             "content":
-            "你是一个助手，任务是将用户的历史对话总结为简洁、清楚的背景信息，以便在未来对话中作为 context 使用，不要包含具体提问或回答，仅保留重要背景和用户偏好。"
+            "你是一个AI对话助手，任务是将以下所有从头到尾的JSON历史对话总结为简洁、清楚的背景信息，以便在未来对话中作为 context 使用，不要包含具体提问或回答，仅保留重要背景和用户偏好："
         }, *history]
+
+        #print(summary_prompt)
 
         summary_response = client.chat.completions.create(
             model="gpt-4.1",
@@ -143,6 +146,13 @@ def summarize_history(user_id: str):
         user_summaries[user_id] = summary_text
         save_summaries()
         print(f"✅ 用户 {user_id} 摘要完成")
+
+        # 清除早期对话，只保留最后 50 条
+        preserved = history[-50:]
+        user_histories[user_id] = preserved
+        save_histories()
+
+        print(f"🧹 用户 {user_id} 的历史已清理，仅保留最近 {len(preserved)} 条对话")
 
     except Exception as e:
         print(f"⚠️ 为用户 {user_id} 生成摘要失败：", e)
@@ -207,11 +217,14 @@ async def ask(interaction: discord.Interaction, prompt: str):
         history = user_histories.get(user_id, [])
         history.append({"role": "user", "content": prompt})
 
+        # 裁剪用于聊天上下文
+        chat_context = history[-MAX_HISTORY:]
+
         # 如果历史太长则先摘要
-        if len(history) >= SUMMARY_TRIGGER:
-            summarize_history(user_id)
-            history = history[-MAX_HISTORY:]
-        user_histories[user_id] = history
+        # if len(history) >= SUMMARY_TRIGGER:
+        #summarize_history(user_id)
+        #history = history[-MAX_HISTORY:]
+        #user_histories[user_id] = history
 
         # 构造 messages
         messages: list[ChatCompletionMessageParam] = []
@@ -230,7 +243,7 @@ async def ask(interaction: discord.Interaction, prompt: str):
                 f"[以下是我的背景信息，供你参考]\n{user_summaries[user_id]}"
             })
 
-        messages.extend(history)
+        messages.extend(chat_context)
 
         try:
             # 调用 GPT
@@ -249,8 +262,13 @@ async def ask(interaction: discord.Interaction, prompt: str):
             history.append({"role": "assistant", "content": reply})
 
             # 限制历史长度 & 保存
-            user_histories[user_id] = history[-MAX_HISTORY:]
+            user_histories[user_id] = history
             save_histories()
+
+            # 如果历史太长则先摘要
+            if len(history) >= SUMMARY_TRIGGER:
+                print("🔍 当前完整历史：", len(user_histories[user_id]))
+                summarize_history(user_id)
 
             await interaction.followup.send(reply)
             print(f"✅ 回复已发送给用户 {user_id}，当前历史记录条数: {len(history)}")
@@ -350,8 +368,10 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
         print(f"模型调用成功：{response.model}")
         print(f"用户提问：{prompt}")
         reply = response.choices[0].message.content or "GPT 没有返回内容。"
-        await interaction.followup.send(
-            f"你抽到的牌是：**{card_name}（{position}）**\n\n{reply}")
+        await interaction.followup.send(f"你抽到的牌是：**{card_name}（{position}）**\n"
+                                        f"你的困惑是：**{wish_text}**\n\n"
+                                        f"{reply}")
+
     except Exception as e:
         await interaction.followup.send(f"❌ 出错了：{str(e)}")
 
@@ -406,17 +426,17 @@ async def timezone(interaction: discord.Interaction):
 
     # 定义需要展示的时区列表
     timezones = {
-        "🇨🇳 中国（北京）": "Asia/Shanghai",
-        "🇯🇵 日本": "Asia/Tokyo",
-        "🇪🇺 西欧（巴黎）": "Europe/Paris",
+        "🇺🇸 美西（洛杉矶）": "America/Los_Angeles",
         "🇺🇸 美中（芝加哥）": "America/Chicago",
         "🇺🇸 美东（纽约）": "America/New_York",
-        "🇺🇸 美西（洛杉矶）": "America/Los_Angeles",
+        "🇪🇺 西欧（巴黎）": "Europe/Paris",
+        "🇨🇳 中国（北京）": "Asia/Shanghai",
         "🇲🇾 马来西亚": "Asia/Kuala_Lumpur",
         "🇸🇬 新加坡": "Asia/Singapore",
-        "🇦🇺 澳大利亚（悉尼）": "Australia/Sydney",
+        "🇦🇺 澳大利亚（珀斯）": "Australia/Perth",
         "🇦🇺 澳大利亚（阿德莱德）": "Australia/Adelaide",
-        "🇦🇺 澳大利亚（珀斯）": "Australia/Perth"
+        "🇦🇺 澳大利亚（悉尼）": "Australia/Sydney",
+        "🇯🇵 日本": "Asia/Tokyo"
     }
 
     now_utc = datetime.now(pytz.utc)
