@@ -345,7 +345,7 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
 
     # 获取当前角色设定
     custom_role = user_roles.get(user_id, "")
-    system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，可作为补充风格参考：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
+    system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，请优先参考用户的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
 
     prompt = f"""请扮演一个有趣可信的女巫。我的困惑是：{wish_text}。
     我抽到的塔罗牌是：{card_name}（{position}），请结合这张牌的含义（注意是{position}），详细地解读这张牌，对我的困惑进行详细的解读和建议。"""
@@ -390,7 +390,7 @@ async def fortune(interaction: discord.Interaction):
     position = random.choice(["正位", "逆位"])
 
     custom_role = user_roles.get(user_id, "")
-    system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，可作为补充风格参考：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
+    system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，请优先参考用户的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
 
     prompt = f"""请扮演一个有趣的女巫，用风趣但可信的语气，为我占卜今天的整体运势。可以从多种多样的方面综合评价。根据塔罗（用户抽到的塔罗牌是：{card_name}（{position}）、星座、八卦、随机事件等自由组合方式生成一个完整的今日运势解析。请保证绝对随机，不要有答案的倾向或偏差，正面消极、好坏都没有关系。"""
 
