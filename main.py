@@ -7,7 +7,6 @@ import discord
 import random
 import asyncio
 import pytz
-from discord import app_commands
 from discord.ext import commands
 from openai import OpenAI
 from keep_alive import keep_alive  # 后面加的保持在线功能
@@ -23,6 +22,16 @@ if TOKEN is None or OPENAI_API_KEY is None:
 
 # 添加锁管理器
 user_locks: dict[str, asyncio.Lock] = {}
+
+
+# gpt_call
+async def gpt_call(*args, **kwargs):
+
+    def sync_call():
+        return client.chat.completions.create(*args, **kwargs)
+
+    return await asyncio.to_thread(sync_call)
+
 
 # 初始化 Discord bot
 intents = discord.Intents.default()
@@ -41,13 +50,13 @@ user_summaries = {}  # 存储用户对话摘要
 user_roles = {}  # 存储用户角色设定
 
 MAX_HISTORY = 100  # 最多保留最近 100 条消息（user+assistant 各算一条）
-SUMMARY_TRIGGER = 80  # 当历史记录超过 80 条消息时，自动进行总结
+SUMMARY_TRIGGER = 100  # 当历史记录超过 100 条消息时，自动进行总结
 HISTORY_FILE = "histories.json"
 SUMMARY_FILE = "summaries.json"
 ROLE_FILE = "roles.json"
 
 # 默认 System Prompt
-DEFAULT_SYSTEM_PROMPT = "你是一个温柔、聪明、擅长倾听的 AI 小助手。请你认真回答用户的问题。默认用户都为女性，使用女性代称，不使用女性歧视的词语，不可以称呼用户小仙女，也不可以称呼小姐姐。如果你不知道答案，请诚实地回答不知道，不要编造内容。你的语言风格亲切可爱，可以在聊天中加点轻松的颜文字、emoji表情。以及当用户说“咋办”的时候只能回复“咋办”两个字，不准加任何的符号或者句子。回复内容不要太啰嗦，保证在1000字以内。"
+DEFAULT_SYSTEM_PROMPT = "你是一个温柔、聪明、擅长倾听的 AI 小助手。请你认真回答用户的问题。默认用户都为女性，使用女性代称，不使用女性歧视的词语，禁止称呼用户小仙女、小姐姐。如果你不知道答案，请诚实地回答不知道，不要编造内容。你的语言风格亲切可爱，可以在聊天中加点轻松的颜文字、emoji表情。以及当用户说“咋办”的时候只能回复“咋办”两个字，不准加任何的符号或者句子。回复内容不要太啰嗦，保证在1000字以内。"
 
 
 # ============================== #
@@ -116,7 +125,7 @@ def load_summaries():
 # ============================== #
 # 自动摘要逻辑
 # ============================== #
-def summarize_history(user_id: str):
+async def summarize_history(user_id: str):
     """为指定用户生成对话摘要"""
     history = user_histories.get(user_id, [])
     if not history:
@@ -135,16 +144,18 @@ def summarize_history(user_id: str):
 
         #print(summary_prompt)
 
-        summary_response = client.chat.completions.create(
-            model="gpt-4.1",
+        #summary_response = client.chat.completions.create(
+        summary_response = await gpt_call(
+            model="gpt-4.1-mini",
             messages=summary_prompt,
             temperature=0.3,
             max_tokens=500,
+            timeout=60,
         )
 
         summary_text = summary_response.choices[0].message.content or ""
         user_summaries[user_id] = summary_text
-        save_summaries()
+        await asyncio.to_thread(save_summaries)
         print(f"✅ 用户 {user_id} 摘要完成")
 
         # 清除早期对话，只保留最后 50 条
@@ -231,7 +242,7 @@ async def ask(interaction: discord.Interaction, prompt: str):
 
         # 1. 所有情况下都加入 user 专属或默认 role
         custom_role = user_roles.get(user_id, "")
-        system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，可作为补充风格参考：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
+        system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，请参考用户的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
         messages.append({"role": "system", "content": system_prompt})
 
         # 2. 如果有摘要，再加一条
@@ -247,11 +258,13 @@ async def ask(interaction: discord.Interaction, prompt: str):
 
         try:
             # 调用 GPT
-            response = client.chat.completions.create(
-                model="gpt-4.1",
+            # response = client.chat.completions.create(
+            response = await gpt_call(
+                model="gpt-4.1-mini",
                 messages=messages,  # 调用包含摘要的完整消息
                 temperature=0.7,
                 max_tokens=1000,
+                timeout=60,
             )
             print(f"模型调用成功：{response.model}")
             print(f"用户提问：{prompt}")
@@ -268,7 +281,7 @@ async def ask(interaction: discord.Interaction, prompt: str):
             # 如果历史太长则先摘要
             if len(history) >= SUMMARY_TRIGGER:
                 print("🔍 当前完整历史：", len(user_histories[user_id]))
-                summarize_history(user_id)
+                await summarize_history(user_id)
 
             await interaction.followup.send(reply)
             print(f"✅ 回复已发送给用户 {user_id}，当前历史记录条数: {len(history)}")
@@ -345,7 +358,7 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
 
     # 获取当前角色设定
     custom_role = user_roles.get(user_id, "")
-    system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，请优先参考用户的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
+    system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，请参考用户的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
 
     prompt = f"""请扮演一个有趣可信的女巫。我的困惑是：{wish_text}。
     我抽到的塔罗牌是：{card_name}（{position}），请结合这张牌的含义（注意是{position}），详细地解读这张牌，对我的困惑进行详细的解读和建议。"""
@@ -359,11 +372,13 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
     }]
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-4.1",
+        #response = client.chat.completions.create(
+        response = await gpt_call(
+            model="gpt-4.1-mini",
             messages=messages,
             temperature=0.8,
             max_tokens=1000,
+            timeout=60,
         )
         print(f"模型调用成功：{response.model}")
         print(f"用户提问：{prompt}")
@@ -390,9 +405,9 @@ async def fortune(interaction: discord.Interaction):
     position = random.choice(["正位", "逆位"])
 
     custom_role = user_roles.get(user_id, "")
-    system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，请优先参考用户的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
+    system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，请参考用户的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
 
-    prompt = f"""请扮演一个有趣的女巫，用风趣但可信的语气，为我占卜今天的整体运势。可以从多种多样的方面综合评价。根据塔罗（用户抽到的塔罗牌是：{card_name}（{position}）、星座、八卦、随机事件等自由组合方式生成一个完整的今日运势解析。请保证绝对随机，不要有答案的倾向或偏差，正面消极、好坏都没有关系。"""
+    prompt = f"""你是一个风趣靠谱的女巫，请用轻松诙谐的语气，为我占卜今天的整体运势。可以从多种多样的方面综合评价。根据塔罗（用户抽到的塔罗牌是：{card_name}（{position}）、星座、八卦、随机事件等自由组合方式生成一个完整的今日运势解析。请保证绝对随机，可以很差，也可以很好。"""
 
     messages: list[ChatCompletionMessageParam] = [{
         "role": "system",
@@ -403,11 +418,13 @@ async def fortune(interaction: discord.Interaction):
     }]
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-4.1",
+        #response = client.chat.completions.create(
+        response = await gpt_call(
+            model="gpt-4.1-mini",
             messages=messages,
             temperature=0.9,
             max_tokens=1000,
+            timeout=60,
         )
         print(f"模型调用成功：{response.model}")
         print(f"用户提问：{prompt}")
