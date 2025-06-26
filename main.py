@@ -12,6 +12,7 @@ from openai import OpenAI
 #from keep_alive import keep_alive  # 后面加的保持在线功能
 from openai.types.chat import ChatCompletionMessageParam
 from datetime import datetime
+from asyncio_throttle import Throttler
 
 # 获取环境变量中的 Token
 TOKEN = os.environ.get("DISCORD_TOKEN")
@@ -22,6 +23,14 @@ if TOKEN is None or OPENAI_API_KEY is None:
 
 # 添加锁管理器
 user_locks: dict[str, asyncio.Lock] = {}
+
+# 每5秒最多5次
+throttler = Throttler(rate_limit=5, period=5)
+
+
+async def send_message(channel, content):
+    async with throttler:
+        await channel.send(content)
 
 
 # gpt_call
@@ -56,7 +65,7 @@ SUMMARY_FILE = "summaries.json"
 ROLE_FILE = "roles.json"
 
 # 默认 System Prompt
-DEFAULT_SYSTEM_PROMPT = "你是一个温柔、聪明、擅长倾听的 AI 小助手，名字是咋办。请你认真回答用户的问题。默认用户都为女性，使用女性代称，不使用女性歧视的词语，禁止称呼用户小仙女、小姐姐。如果你不知道答案，请诚实地回答不知道，不要编造内容。你的语言风格亲切可爱，可以在聊天中加点轻松的颜文字、emoji表情。以及当用户说“咋办”的时候只能回复“咋办”两个字，不准加任何的符号或者句子。回复内容不要太啰嗦，保证在1000字以内。"
+DEFAULT_SYSTEM_PROMPT = "你是一个温柔、聪明、擅长倾听的 AI 小助手，名字是咋办。请你认真回答用户的问题。默认用户都为女性，使用女性代称，不使用女性歧视的词语，禁止称呼用户小仙女、小姐姐。如果你不知道答案，请诚实地回答不知道，不要编造内容。你的语言风格亲切可爱，可以在聊天中加点轻松的颜文字、emoji表情。回复内容不要太啰嗦，保证在1000字以内。当用户没有说其他内容，只有“咋办”这两个字的时候，你就只能回复“咋办”两个字，不准加任何的符号或者句子，其他时候正常对话。"
 
 
 # ============================== #
@@ -146,7 +155,7 @@ async def summarize_history(user_id: str):
 
         #summary_response = client.chat.completions.create(
         summary_response = await gpt_call(
-            model="gpt-4.1-mini",
+            model="gpt-4.1",
             messages=summary_prompt,
             temperature=0.3,
             max_tokens=500,
@@ -215,6 +224,22 @@ async def on_ready():
 
 
 # ============================== #
+# 聊天记录中trigger咋办
+# ============================== #
+@bot.event
+async def on_message(message):
+    # 避免 bot 自己触发自己
+    if message.author.bot:
+        return
+
+    if "咋办" in message.content:
+        await message.channel.send("咋办")
+
+    # 为了确保其他指令还能运行
+    await bot.process_commands(message)
+
+
+# ============================== #
 # ask 指令
 # ============================== #
 @bot.tree.command(name="ask", description="咋办")
@@ -260,7 +285,7 @@ async def ask(interaction: discord.Interaction, prompt: str):
             # 调用 GPT
             # response = client.chat.completions.create(
             response = await gpt_call(
-                model="gpt-4.1-mini",
+                model="gpt-4.1",
                 messages=messages,  # 调用包含摘要的完整消息
                 temperature=0.7,
                 max_tokens=1000,
@@ -309,7 +334,7 @@ async def choose(interaction: discord.Interaction, options: str):
 
     # 随机选择
     result = random.choice(choices)
-    await interaction.followup.send(f"🎲 咋办寻思：**{result}**")
+    await interaction.followup.send(f"💭 咋办寻思：**{result}**")
 
 
 # ============================== #
@@ -395,7 +420,7 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
     try:
         #response = client.chat.completions.create(
         response = await gpt_call(
-            model="gpt-4.1-mini",
+            model="gpt-4.1",
             messages=messages,
             temperature=0.8,
             max_tokens=1000,
@@ -441,7 +466,7 @@ async def fortune(interaction: discord.Interaction):
     try:
         #response = client.chat.completions.create(
         response = await gpt_call(
-            model="gpt-4.1-mini",
+            model="gpt-4.1",
             messages=messages,
             temperature=0.9,
             max_tokens=1000,
@@ -493,7 +518,7 @@ async def timezone(interaction: discord.Interaction):
 # ============================== #
 # summarycheck 指令
 # ============================== #
-@bot.tree.command(name="summarycheck", description="查看你的对话摘要")
+@bot.tree.command(name="summarycheck", description="查看你的对话摘要（超过100条才有）")
 async def summarycheck(interaction: discord.Interaction):
     user_id = str(interaction.user.id)
     summary_text = user_summaries.get(user_id)
@@ -534,7 +559,7 @@ async def help_command(interaction: discord.Interaction):
            "`/setrole <风格设定>` - 设置专属的角色风格\n"
            "`/rolecheck` - 查看你的角色设定\n"
            "`/resetrole` - 清除你的角色设定，恢复默认风格\n"
-           "`/summarycheck` - 查看你的对话摘要\n"
+           "`/summarycheck` - 查看你的对话摘要（超过100条才有）\n"
            "`/reset` - 重置清空所有历史\n"
            "`/help` - 列出所有可用指令\n")
     await interaction.response.send_message(msg)
