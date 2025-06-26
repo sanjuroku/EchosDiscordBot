@@ -9,7 +9,7 @@ import asyncio
 import pytz
 from discord.ext import commands
 from openai import OpenAI
-from keep_alive import keep_alive  # 后面加的保持在线功能
+#from keep_alive import keep_alive  # 后面加的保持在线功能
 from openai.types.chat import ChatCompletionMessageParam
 from datetime import datetime
 
@@ -56,7 +56,7 @@ SUMMARY_FILE = "summaries.json"
 ROLE_FILE = "roles.json"
 
 # 默认 System Prompt
-DEFAULT_SYSTEM_PROMPT = "你是一个温柔、聪明、擅长倾听的 AI 小助手。请你认真回答用户的问题。默认用户都为女性，使用女性代称，不使用女性歧视的词语，禁止称呼用户小仙女、小姐姐。如果你不知道答案，请诚实地回答不知道，不要编造内容。你的语言风格亲切可爱，可以在聊天中加点轻松的颜文字、emoji表情。以及当用户说“咋办”的时候只能回复“咋办”两个字，不准加任何的符号或者句子。回复内容不要太啰嗦，保证在1000字以内。"
+DEFAULT_SYSTEM_PROMPT = "你是一个温柔、聪明、擅长倾听的 AI 小助手，名字是咋办。请你认真回答用户的问题。默认用户都为女性，使用女性代称，不使用女性歧视的词语，禁止称呼用户小仙女、小姐姐。如果你不知道答案，请诚实地回答不知道，不要编造内容。你的语言风格亲切可爱，可以在聊天中加点轻松的颜文字、emoji表情。以及当用户说“咋办”的时候只能回复“咋办”两个字，不准加任何的符号或者句子。回复内容不要太啰嗦，保证在1000字以内。"
 
 
 # ============================== #
@@ -217,7 +217,7 @@ async def on_ready():
 # ============================== #
 # ask 指令
 # ============================== #
-@bot.tree.command(name="ask", description="向 GPT 提问")
+@bot.tree.command(name="ask", description="咋办")
 async def ask(interaction: discord.Interaction, prompt: str):
     await interaction.response.defer()  # 先回个“处理中”
     user_id = str(interaction.user.id)
@@ -292,6 +292,27 @@ async def ask(interaction: discord.Interaction, prompt: str):
 
 
 # ============================== #
+# choose 指令
+# ============================== #
+@bot.tree.command(name="choose", description="让咋办帮忙选选")
+async def choose(interaction: discord.Interaction, options: str):
+    """
+    用法示例：/choose 猫 狗 企鹅 火锅
+    """
+    await interaction.response.defer()
+
+    # 分割用户输入的字符串
+    choices = options.strip().split()
+    if len(choices) < 2:
+        await interaction.followup.send("⚠️ 请至少提供两个选项，例如：`/choose A B C`")
+        return
+
+    # 随机选择
+    result = random.choice(choices)
+    await interaction.followup.send(f"🎲 咋办寻思：**{result}**")
+
+
+# ============================== #
 # setrole 指令
 # ============================== #
 @bot.tree.command(name="setrole", description="设置专属的角色风格")
@@ -318,7 +339,7 @@ async def rolecheck(interaction: discord.Interaction):
 # ============================== #
 # resetrole 指令
 # ============================== #
-@bot.tree.command(name="resetrole", description="清除角色风格设定")
+@bot.tree.command(name="resetrole", description="清除你的角色设定，恢复默认风格")
 async def resetrole(interaction: discord.Interaction):
     user_id = str(interaction.user.id)
     if user_id in user_roles:
@@ -346,7 +367,7 @@ TAROT_CARDS = [
 ]
 
 
-@bot.tree.command(name="tarot", description="让GPT抽一张塔罗牌解读你的困惑")
+@bot.tree.command(name="tarot", description="抽一张塔罗牌解读你的困惑")
 async def tarot(interaction: discord.Interaction, wish_text: str):
     await interaction.response.defer()
     user_id = str(interaction.user.id)
@@ -407,7 +428,7 @@ async def fortune(interaction: discord.Interaction):
     custom_role = user_roles.get(user_id, "")
     system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，请参考用户的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
 
-    prompt = f"""你是一个风趣靠谱的女巫，请用轻松诙谐的语气，为我占卜今天的整体运势。可以从多种多样的方面综合评价。根据塔罗（用户抽到的塔罗牌是：{card_name}（{position}）、星座、八卦、随机事件等自由组合方式生成一个完整的今日运势解析。请保证绝对随机，可以很差，也可以很好。"""
+    prompt = f"""你是一个风趣靠谱的女巫，请用轻松诙谐的语气，为我占卜今天的整体运势。可以从多种多样的方面综合评价。根据塔罗（用户抽到的塔罗牌是：{card_name}（{position}）、星座、八卦、抽签（类似日本神社抽签，吉凶随机）、随机事件、今日的幸运食物、今日的幸运emoji、今日的幸运颜文字、今日的小小建议等自由组合方式生成一个完整的今日运势解析。回复格式自由。请保证绝对随机，可以很差，也可以很好。"""
 
     messages: list[ChatCompletionMessageParam] = [{
         "role": "system",
@@ -487,7 +508,7 @@ async def summarycheck(interaction: discord.Interaction):
 # ============================== #
 # rest 指令
 # ============================== #
-@bot.tree.command(name="reset", description="重置清空GPT历史")
+@bot.tree.command(name="reset", description="重置清空所有历史")
 async def reset(interaction: discord.Interaction):
     user_id = str(interaction.user.id)
     user_histories.pop(user_id, None)
@@ -496,7 +517,7 @@ async def reset(interaction: discord.Interaction):
     save_histories()
     save_summaries()
     save_roles()
-    await interaction.response.send_message("✅ 你的GPT历史已清空～可以开始新的提问啦！")
+    await interaction.response.send_message("✅ 你的历史已清空～可以开始新的提问啦！")
 
 
 # ============================== #
@@ -505,16 +526,17 @@ async def reset(interaction: discord.Interaction):
 @bot.tree.command(name="help", description="列出所有可用指令")
 async def help_command(interaction: discord.Interaction):
     msg = ("可用指令列表：\n"
-           "/ask <问题> - 向 GPT 提问\n"
-           "/tarot <困惑> - 让GPT抽一张塔罗牌解读你的困惑\n"
-           "/fortune - 占卜你的今日运势并解读\n"
-           "/timezone - 显示当前时间与全球多个时区的对照\n"
-           "/setrole <风格设定> - 设置角色风格\n"
-           "/rolecheck - 查看当前角色设定\n"
-           "/resetrole - 清除你的角色设定，恢复默认风格\n"
-           "/summarycheck - 查看你的对话摘要\n"
-           "/reset - 重置清空GPT历史\n"
-           "/help - 查看帮助\n")
+           "`/ask <问题>` - 咋办\n"
+           "`/choose <选项1> <选项2> ...` - 让咋办帮忙选选\n"
+           "`/tarot <困惑>` - 抽一张塔罗牌解读你的困惑\n"
+           "`/fortune` - 占卜你的今日运势并解读\n"
+           "`/timezone` - 显示当前时间与全球多个时区的对照\n\n"
+           "`/setrole <风格设定>` - 设置专属的角色风格\n"
+           "`/rolecheck` - 查看你的角色设定\n"
+           "`/resetrole` - 清除你的角色设定，恢复默认风格\n"
+           "`/summarycheck` - 查看你的对话摘要\n"
+           "`/reset` - 重置清空所有历史\n"
+           "`/help` - 列出所有可用指令\n")
     await interaction.response.send_message(msg)
 
 
@@ -524,5 +546,5 @@ async def help_command(interaction: discord.Interaction):
 load_histories()
 load_summaries()
 load_roles()
-keep_alive()
+#keep_alive()
 bot.run(TOKEN)
