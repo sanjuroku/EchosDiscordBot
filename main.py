@@ -12,7 +12,13 @@ from openai import OpenAI
 #from keep_alive import keep_alive  # 后面加的保持在线功能
 from openai.types.chat import ChatCompletionMessageParam
 from datetime import datetime
-from asyncio_throttle import Throttler
+from asyncio_throttle.throttler import Throttler
+# steam查询依赖包
+from discord import Interaction, Embed, app_commands
+from typing import Optional
+import aiohttp
+import re
+import time
 
 # 获取环境变量中的 Token
 TOKEN = os.environ.get("DISCORD_TOKEN")
@@ -453,7 +459,7 @@ async def fortune(interaction: discord.Interaction):
     custom_role = user_roles.get(user_id, "")
     system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，请参考用户的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
 
-    prompt = f"""你是一个风趣靠谱的女巫，请用轻松诙谐的语气，为我占卜今天的整体运势。可以从多种多样的方面综合评价。根据塔罗（用户抽到的塔罗牌是：{card_name}（{position}）、星座、八卦、抽签（类似日本神社抽签，吉凶随机）、随机事件、今日的幸运食物、今日的幸运emoji、今日的幸运颜文字、今日的小小建议等自由组合方式生成一个完整的今日运势解析。回复格式自由。请保证绝对随机，可以很差，也可以很好。"""
+    prompt = f"""你是一个风趣靠谱的女巫，请用轻松诙谐的语气，为我占卜今天的整体运势。可以从多种多样的方面综合评价。根据塔罗（用户抽到的塔罗牌是：{card_name}（{position}）、星座、八卦、抽签（类似日本神社抽签，吉凶随机）、随机事件、今日推荐的wordle起手词（随机抽取一个5个字母的英语单词）、今日的幸运食物、今日的幸运emoji、今日的幸运颜文字、今日的小小建议等自由组合方式生成一个完整的今日运势解析。回复格式自由。请保证绝对随机，可以很差，也可以很好。"""
 
     messages: list[ChatCompletionMessageParam] = [{
         "role": "system",
@@ -516,6 +522,187 @@ async def timezone(interaction: discord.Interaction):
 
 
 # ============================== #
+# /steam 指令：查询游戏信息
+# ============================== #
+
+# 可选地区列表
+region_choices = [
+    app_commands.Choice(name="国区（人民币）", value="cn"),
+    app_commands.Choice(name="美区（美元）", value="us"),
+    app_commands.Choice(name="日区（日元）", value="jp"),
+    app_commands.Choice(name="港区（港币）", value="hk"),
+    app_commands.Choice(name="马来西亚区（林吉特）", value="my"),
+    app_commands.Choice(name="加拿大区（加元）", value="ca"),
+    app_commands.Choice(name="欧洲区（欧元）", value="eu"),
+    app_commands.Choice(name="俄区（卢布）", value="ru"),
+    app_commands.Choice(name="土区（土耳其里拉）", value="tr"),
+    app_commands.Choice(name="阿区（阿根廷比索）", value="ar"),
+]
+# 本地缓存（避免频繁调用）
+steam_cache = {}
+
+
+# 1. 让 GPT 返回标准中文和英文游戏名
+async def get_standard_names_by_gpt(game_name: str) -> Optional[tuple]:
+    prompt = ("请你根据下列用户输入的 Steam 游戏名，返回该游戏的标准官方中文名称和英文名称。\n"
+              "格式为：\n中文名：xxx\n英文名：yyy\n"
+              "用户输入：" + game_name)
+    # 调用现有的 gpt_call
+    response = await gpt_call(model="gpt-4.1",
+                              messages=[{
+                                  "role": "user",
+                                  "content": prompt
+                              }],
+                              temperature=0.1,
+                              max_tokens=50,
+                              timeout=20)
+    print(f"模型调用成功：{response.model}")
+    print(f"用户提问：{prompt}")
+    print("GPT返回：\n", response.choices[0].message.content)
+    content = (response.choices[0].message.content or "").strip()
+    # 粗暴正则匹配
+    zh_match = re.search(r"中文名[:：]\s*(.+)", content)
+    en_match = re.search(r"英文名[:：]\s*(.+)", content)
+    zh_name = zh_match.group(1).strip() if zh_match else None
+    en_name = en_match.group(1).strip() if en_match else None
+    return (zh_name, en_name) if zh_name or en_name else None
+
+
+# 2. 封装 steam storesearch 搜索
+async def steam_fuzzy_search(session, search_name, region_code, lang):
+    search_url = (
+        f"https://store.steampowered.com/api/storesearch/?term={search_name}&cc={region_code}&l={lang}"
+    )
+    async with session.get(search_url) as resp:
+        data = await resp.json()
+    if data.get("items"):
+        return data["items"][0]  # 返回第一个最相关
+    return None
+
+
+@bot.tree.command(name="steam", description="查询 Steam 游戏信息")
+@app_commands.describe(game_name="游戏名称", region="查询地区（默认国区）")
+@app_commands.choices(region=region_choices)
+async def steam(interaction: Interaction,
+                game_name: str,
+                region: Optional[app_commands.Choice[str]] = None):
+    await interaction.response.defer()
+
+    region_code = region.value if region else "cn"
+    region_display = region.name if region else "国区（人民币）"
+    cache_key = f"{game_name.lower()}_{region_code}"
+
+    # 缓存命中（10分钟有效）
+    now = time.time()
+    if cache_key in steam_cache:
+        cached = steam_cache[cache_key]
+        if now - cached["timestamp"] < 600:
+            await interaction.followup.send(embed=cached["embed"])
+            return
+
+    # 1. GPT 标准化游戏名
+    names = await get_standard_names_by_gpt(game_name)
+    if not names:
+        await interaction.followup.send("❌ 未能标准化游戏名，请检查输入。")
+        return
+    zh_name, en_name = names
+
+    # 2. 依次用“中文名-英文名-原始名”去 Steam 搜索（优先中文）
+    async with aiohttp.ClientSession() as session:
+        found = None
+        app_id = None
+        for try_name in [zh_name, en_name, game_name]:
+            if not try_name:
+                continue
+            found = await steam_fuzzy_search(session, try_name, region_code,
+                                             "zh")
+            if found:
+                app_id = found["id"]
+                break
+
+        if not app_id:
+            await interaction.followup.send("❌ Steam商店未找到匹配的游戏，请检查输入。")
+            return
+
+        # 3. 获取游戏详情
+        zh_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc={region_code}&l=zh"
+        en_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc={region_code}&l=en"
+        print(f"🔍 正在搜索游戏：{game_name}")
+        print(f"🔗 搜索链接：{zh_url}")
+        print(f"🔗 备用链接：{en_url}")
+        print(f"🌐 地区：{region_code}")
+
+        zh_resp, en_resp = await asyncio.gather(session.get(zh_url),
+                                                session.get(en_url))
+
+        zh_data = await zh_resp.json()
+        en_data = await en_resp.json()
+        #print("debug用zh_data\n", zh_data)
+
+    app_id = str(app_id)
+    zh_info = zh_data.get(str(app_id), {}).get("data", {}) if zh_data.get(
+        str(app_id), {}).get("success") else {}
+    en_info = en_data.get(str(app_id), {}).get("data", {}) if en_data.get(
+        str(app_id), {}).get("success") else {}
+    if not zh_data.get(str(app_id), {}).get("success"):
+        print("❗ 中文 API 获取失败")
+    if not en_data.get(str(app_id), {}).get("success"):
+        print("❗ 英文 API 获取失败")
+
+    # 4. 构建 Embed 优先中文
+    display_zh_name = zh_info.get("name") or zh_name or "未知游戏"
+    display_en_name = en_info.get("name") or en_name or "Unknown"
+    desc = zh_info.get("short_description") or en_info.get(
+        "short_description") or "暂无简介"
+    print("✅ zh short_description:", zh_info.get("short_description"))
+    print("✅ en short_description:", en_info.get("short_description"))
+    header = zh_info.get("header_image") or en_info.get("header_image")
+    store_url = f"https://store.steampowered.com/app/{app_id}"
+    price_info = zh_info.get("price_overview") or en_info.get("price_overview")
+    print("✅ zh price_overview:", zh_info.get("price_overview"))
+    print("✅ en price_overview:", en_info.get("price_overview"))
+    print(f"🎮 游戏名称：{display_zh_name} + {display_en_name}")
+    print(f"🔗 商店链接：{store_url}")
+    print(f"💰 价格信息：{price_info}")
+
+    if price_info:
+        currency = price_info["currency"]
+        final = price_info["final"] / 100
+        initial = price_info["initial"] / 100
+        discount = price_info["discount_percent"]
+
+        if discount > 0:
+            price_text = (
+                f"现价：{final:.2f} {currency}（原价：{initial:.2f}，折扣：**{discount}%**）"
+            )
+        else:
+            price_text = f"价格：{final:.2f} {currency}"
+    else:
+        price_text = "免费或暂无价格信息"
+
+    # 构建 Embed
+    embed = Embed(title=f"# 🎮 {display_zh_name} / {display_en_name}",
+                  description=desc,
+                  url=store_url)
+    embed.add_field(name=f"## 💰 当前价格 💰 {region_display}",
+                    value=price_text,
+                    inline=False)
+    embed.add_field(name="## 🔗 商店链接", value=store_url, inline=False)
+    if header:
+        embed.set_image(url=header)
+    else:
+        embed.set_image(
+            url=
+            "https://store.cloudflare.steamstatic.com/public/shared/images/header/globalheader_logo.png"
+        )
+
+    # 写入缓存
+    steam_cache[cache_key] = {"embed": embed, "timestamp": now}
+
+    await interaction.followup.send(embed=embed)
+
+
+# ============================== #
 # summarycheck 指令
 # ============================== #
 @bot.tree.command(name="summarycheck", description="查看你的对话摘要（超过100条才有）")
@@ -555,6 +742,7 @@ async def help_command(interaction: discord.Interaction):
            "`/choose <选项1> <选项2> ...` - 让咋办帮忙选选\n"
            "`/tarot <困惑>` - 抽一张塔罗牌解读你的困惑\n"
            "`/fortune` - 占卜你的今日运势并解读\n"
+           "`/steam <游戏名称> [地区]` - 查询 Steam 游戏信息\n"
            "`/timezone` - 显示当前时间与全球多个时区的对照\n\n"
            "`/setrole <风格设定>` - 设置专属的角色风格\n"
            "`/rolecheck` - 查看你的角色设定\n"

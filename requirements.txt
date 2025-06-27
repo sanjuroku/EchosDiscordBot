@@ -5,3 +5,4 @@ flask
 requests
 pytz
 asyncio-throttle
+aiohttp
