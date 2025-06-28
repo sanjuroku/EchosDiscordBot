@@ -39,7 +39,7 @@ TOKEN = os.environ.get("DISCORD_TOKEN")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 if TOKEN is None or OPENAI_API_KEY is None:
     raise ValueError(
-        "环境变量未设置，请在 Replit 的 Secrets 中添加 DISCORD_TOKEN 和 OPENAI_API_KEY")
+        "环境变量未设置，请设置 DISCORD_TOKEN 和 OPENAI_API_KEY")
 
 # 添加锁管理器
 user_locks: dict[str, asyncio.Lock] = {}
