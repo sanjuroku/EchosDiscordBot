@@ -338,8 +338,8 @@ async def choose(interaction: discord.Interaction, options: str):
     # 随机选择
     result = random.choice(choices)
     
-    logging.info(f"选项: {options}")
-    logging.info(f"结果: {result}")
+    logging.info(f"💭 选项: {options}")
+    logging.info(f"💭 结果: {result}")
     
     await interaction.followup.send(f"💭 咋办寻思：**{result}**")
 
@@ -443,7 +443,7 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
                                         f"你抽到的牌是：**{card_name}（{position}）**\n\n"
                                         f"{reply}")
         
-        logging.info(f"用户: {user_id} ")
+        logging.info(f"用户: {user_id} 占卜塔罗牌")
         logging.info(f"困惑: {wish_text}")
         logging.info(f"抽取的塔罗牌: {card_name}({position})")
 
