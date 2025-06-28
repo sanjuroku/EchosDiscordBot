@@ -106,7 +106,7 @@ def save_histories():
         with open(HISTORY_FILE, "w", encoding="utf-8") as f:
             json.dump(user_histories, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        logging.error("保存历史记录出错：", e)
+        logging.error(f"保存历史记录出错：{e}")
 
 
 def load_histories():
@@ -118,7 +118,7 @@ def load_histories():
                 user_histories = json.load(f)
             logging.info(f"✅ 已从 {HISTORY_FILE} 加载历史记录，共 {len(user_histories)} 个用户")
         except Exception as e:
-            logging.warning("⚠️ 读取历史记录失败，已忽略：", e)
+            logging.warning(f"⚠️ 读取历史记录失败，已忽略：{e}")
             user_histories = {}
     else:
         user_histories = {}
@@ -133,7 +133,7 @@ def save_summaries():
         with open(SUMMARY_FILE, "w", encoding="utf-8") as f:
             json.dump(user_summaries, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        logging.error("❌ 保存摘要失败：", e)
+        logging.error(f"❌ 保存摘要失败：{e}")
 
 
 def load_summaries():
@@ -145,7 +145,7 @@ def load_summaries():
                 user_summaries = json.load(f)
             logging.info(f"已从 {SUMMARY_FILE} 加载摘要，共 {len(user_summaries)} 个用户")
         except Exception as e:
-            logging.warning("摘要读取失败，已忽略：", e)
+            logging.warning(f"摘要读取失败，已忽略：{e}")
             user_summaries = {}
     else:
         user_summaries = {}
@@ -207,7 +207,7 @@ def save_roles():
         with open(ROLE_FILE, "w", encoding="utf-8") as f:
             json.dump(user_roles, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        logging.error("❌ 保存 role 失败：", e)
+        logging.error(f"❌ 保存 role 失败：{e}")
 
 
 def load_roles():
@@ -219,7 +219,7 @@ def load_roles():
                 user_roles = json.load(f)
             logging.info(f"已从 {ROLE_FILE} 加载用户 role，共 {len(user_roles)} 个")
         except Exception as e:
-            logging.warning("⚠️ 读取 role 失败，已忽略：", e)
+            logging.warning(f"⚠️ 读取 role 失败，已忽略：{e}")
             user_roles = {}
     else:
         user_roles = {}
@@ -325,14 +325,14 @@ async def ask(interaction: discord.Interaction, prompt: str):
 
             # 如果历史太长则先摘要
             if len(history) >= SUMMARY_TRIGGER:
-                logging.info("🔍 当前完整历史：", len(user_histories[user_id]))
+                logging.info(f"🔍 当前完整历史：{len(user_histories[user_id])}")
                 await summarize_history(user_id)
 
             await interaction.followup.send(reply)
             logging.info(f"✅ 回复已发送给用户 {user_id}，当前历史记录条数: {len(history)}")
 
         except Exception as e:
-            logging.error("❌ GPT调用出错：", e)
+            logging.error(f"❌ GPT调用出错：{e}")
             await interaction.followup.send(f"❌ 出错了：{str(e)}")
 
 
@@ -577,12 +577,13 @@ async def get_standard_names_by_gpt(game_name: str) -> Optional[tuple]:
     en_match = re.search(r"英文名[:：]\s*(.+)", content)
     zh_name = zh_match.group(1).strip() if zh_match else None
     en_name = en_match.group(1).strip() if en_match else None
-    logging.info("正则匹配结果：%s", {
-    "zh_match": zh_match,
-    "en_match": en_match,
-    "zh_name": zh_name,
-    "en_name": en_name
-    })
+    logging.info(
+        f"正则匹配结果：\n"
+        f"  中文匹配：{zh_match}\n"
+        f"  英文匹配：{en_match}\n"
+        f"  中文名称：{zh_name}\n"
+        f"  英文名称：{en_name}"
+    )
     return (zh_name, en_name) if zh_name or en_name else None
 
 
@@ -650,13 +651,12 @@ async def steam(interaction: Interaction,
             await interaction.followup.send("❌ Steam商店未找到匹配的游戏，请检查输入。")
             return
 
-        # 3. 获取游戏详情
-        zh_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc={region_code}&l=zh"
-        en_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc={region_code}&l=en"
-        logging.info(f"🔍 正在搜索游戏：{game_name}")
+        # 3. 获取游戏详情（默认cn和us）
+        zh_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc=cn&l=zh"
+        en_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc=us&l=en"
+        logging.info(f"🔍 正在搜索游戏：{names}")
         logging.info(f"🔗 搜索链接：{zh_url}")
         logging.info(f"🔗 备用链接：{en_url}")
-        logging.info(f"🌐 地区：{region_code}")
 
         zh_resp, en_resp = await asyncio.gather(session.get(zh_url),
                                                 session.get(en_url))
@@ -680,16 +680,17 @@ async def steam(interaction: Interaction,
     display_en_name = en_info.get("name") or en_name or "Unknown"
     desc = zh_info.get("short_description") or en_info.get(
         "short_description") or "暂无简介"
-    logging.info("✅ zh short_description:", zh_info.get("short_description"))
-    logging.info("✅ en short_description:", en_info.get("short_description"))
+    logging.info(f"✅ zh short_description: {zh_info.get('short_description')}")
+    logging.info(f"✅ en short_description: {en_info.get('short_description')}")
     header = zh_info.get("header_image") or en_info.get("header_image")
     store_url = f"https://store.steampowered.com/app/{app_id}"
     price_info = zh_info.get("price_overview") or en_info.get("price_overview")
-    logging.info("✅ zh price_overview:", zh_info.get("price_overview"))
-    logging.info("✅ en price_overview:", en_info.get("price_overview"))
+    logging.info(f"✅ zh price_overview: {zh_info.get('price_overview')}")
+    logging.info(f"✅ en price_overview: {en_info.get('price_overview')}")
     logging.info(f"🎮 游戏名称：{display_zh_name} + {display_en_name}")
     logging.info(f"🔗 商店链接：{store_url}")
     logging.info(f"💰 价格信息：{price_info}")
+    logging.info(f"🌐 地区：{region_code}")
 
     if price_info:
         currency = price_info["currency"]
@@ -706,7 +707,7 @@ async def steam(interaction: Interaction,
     else:
         price_text = "免费或暂无价格信息"
 
-    # 构建 Embed
+    # 构建 Embed 
     embed = Embed(title=f"🎮 {display_zh_name} / {display_en_name}",
                   description=desc,
                   url=store_url)
