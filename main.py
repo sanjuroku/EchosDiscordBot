@@ -165,8 +165,6 @@ async def summarize_history(user_id: str):
             "你是一个AI对话助手，任务是将以下所有从头到尾的JSON历史对话总结为简洁、清楚的背景信息，以便在未来对话中作为 context 使用，不要包含具体提问或回答，仅保留重要背景和用户偏好："
         }, *history]
 
-        #logging.info(summary_prompt)
-
         #summary_response = client.chat.completions.create(
         summary_response = await gpt_call(
             model="gpt-4.1",
@@ -340,7 +338,8 @@ async def choose(interaction: discord.Interaction, options: str):
     # 随机选择
     result = random.choice(choices)
     
-    logging.info(f"选项:{options}\n结果:{result}")
+    logging.info(f"选项:{options}")
+    logging.info(f"结果:{result}")
     
     await interaction.followup.send(f"💭 咋办寻思：**{result}**")
 
@@ -439,13 +438,14 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
             timeout=60,
         )
         logging.info(f"✅ 模型调用成功：{response.model}")
-        # logging.info(f"用户提问：{prompt}")
         reply = response.choices[0].message.content or "❌ GPT 没有返回内容。"
         await interaction.followup.send(f"你抽到的牌是：**{card_name}（{position}）**\n"
                                         f"你的困惑是：**{wish_text}**\n\n"
                                         f"{reply}")
         
-        logging.info(f"用户 {user_id} \n困惑：{wish_text}\n抽取的塔罗牌：{card_name}（{position}）")
+        logging.info(f"用户: {user_id} ")
+        logging.info(f"困惑: {wish_text}")
+        logging.info(f"抽取的塔罗牌: {card_name}({position})")
 
     except Exception as e:
         await interaction.followup.send(f"❌ 出错了：{str(e)}")
@@ -486,11 +486,11 @@ async def fortune(interaction: discord.Interaction):
             timeout=60,
         )
         logging.info(f"✅ 模型调用成功：{response.model}")
-        # logging.info(f"用户提问：{prompt}")
         reply = response.choices[0].message.content or "❌ GPT 没有返回内容。"
         await interaction.followup.send(reply)
         
-        logging.info(f"用户 {user_id} 占卜今日运势\n抽取的塔罗牌：{card_name}（{position}）")
+        logging.info(f"用户 {user_id} 占卜今日运势")
+        logging.info(f"抽取的塔罗牌: {card_name}({position})")
         
     except Exception as e:
         await interaction.followup.send(f"❌ 出错了：{str(e)}")
@@ -571,7 +571,6 @@ async def get_standard_names_by_gpt(game_name: str) -> Optional[tuple]:
                               max_tokens=50,
                               timeout=20)
     logging.info(f"✅ 模型调用成功：{response.model}")
-    # logging.info(f"用户提问：{prompt}")
     logging.info(f"GPT返回：\n{response.choices[0].message.content}")
     content = (response.choices[0].message.content or "").strip()
     # 正则匹配
@@ -691,10 +690,8 @@ async def steam(interaction: Interaction,
     header = zh_info.get("header_image") or en_info.get("header_image")
     store_url = f"https://store.steampowered.com/app/{app_id}"
     price_info = zh_info.get("price_overview") or en_info.get("price_overview")
-    
-    # logging.info(f"✅ zh price_overview: {zh_info.get('price_overview')}")
-    # logging.info(f"✅ en price_overview: {en_info.get('price_overview')}")
-    logging.info(f"🎮 游戏名称：{display_zh_name} + {display_en_name}")
+
+    logging.info(f"🎮 游戏名称：{display_zh_name} / {display_en_name}")
     logging.info(f"🔗 商店链接：{store_url}")
     logging.info(f"🌐 地区：{region_code}")
 
