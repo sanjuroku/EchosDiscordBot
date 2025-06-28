@@ -509,22 +509,21 @@ async def timezone(interaction: discord.Interaction):
 
     # 定义需要展示的时区列表
     timezones = {
+        "🇨🇦 加拿大（温哥华）": "America/Vancouver",
         "🇺🇸 美西（洛杉矶）": "America/Los_Angeles",
+        "🇨🇦 加拿大（埃德蒙顿）": "America/Edmonton",
         "🇺🇸 美中（芝加哥）": "America/Chicago",
         "🇺🇸 美东（纽约）": "America/New_York",
+        "🇨🇦 加拿大（多伦多）": "America/Toronto",
+        "🇬🇧 英国（伦敦）": "Europe/London",
         "🇪🇺 西欧（巴黎）": "Europe/Paris",
         "🇨🇳 中国（北京）": "Asia/Shanghai",
         "🇲🇾 马来西亚": "Asia/Kuala_Lumpur",
         "🇸🇬 新加坡": "Asia/Singapore",
         "🇦🇺 澳大利亚（珀斯）": "Australia/Perth",
-        "🇦🇺 澳大利亚（阿德莱德）": "Australia/Adelaide",
-        "🇦🇺 澳大利亚（悉尼）": "Australia/Sydney",
         "🇯🇵 日本": "Asia/Tokyo",
-        
-        "🇨🇦 加拿大（温哥华）": "America/Vancouver",
-        "🇨🇦 加拿大（埃德蒙顿）": "America/Edmonton",
-        "🇨🇦 加拿大（多伦多）": "America/Toronto",
-        "🇬🇧 英国（伦敦）": "Europe/London"
+        "🇦🇺 澳大利亚（阿德莱德）": "Australia/Adelaide",
+        "🇦🇺 澳大利亚（悉尼）": "Australia/Sydney"
     }
 
     now_utc = datetime.now(pytz.utc)
