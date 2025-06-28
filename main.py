@@ -510,11 +510,11 @@ async def timezone(interaction: discord.Interaction):
     # 定义需要展示的时区列表
     timezones = {
         "🇨🇦 加拿大（温哥华）": "America/Vancouver",
-        "🇺🇸 美西（洛杉矶）": "America/Los_Angeles",
         "🇨🇦 加拿大（埃德蒙顿）": "America/Edmonton",
+        "🇨🇦 加拿大（多伦多）": "America/Toronto",
+        "🇺🇸 美西（洛杉矶）": "America/Los_Angeles",
         "🇺🇸 美中（芝加哥）": "America/Chicago",
         "🇺🇸 美东（纽约）": "America/New_York",
-        "🇨🇦 加拿大（多伦多）": "America/Toronto",
         "🇬🇧 英国（伦敦）": "Europe/London",
         "🇪🇺 西欧（巴黎）": "Europe/Paris",
         "🇨🇳 中国（北京）": "Asia/Shanghai",
