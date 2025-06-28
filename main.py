@@ -570,13 +570,19 @@ async def get_standard_names_by_gpt(game_name: str) -> Optional[tuple]:
                               timeout=20)
     logging.info(f"模型调用成功：{response.model}")
     logging.info(f"用户提问：{prompt}")
-    logging.info("GPT返回：\n", response.choices[0].message.content)
+    logging.info(f"GPT返回：\n{response.choices[0].message.content}")
     content = (response.choices[0].message.content or "").strip()
-    # 粗暴正则匹配
+    # 正则匹配
     zh_match = re.search(r"中文名[:：]\s*(.+)", content)
     en_match = re.search(r"英文名[:：]\s*(.+)", content)
     zh_name = zh_match.group(1).strip() if zh_match else None
     en_name = en_match.group(1).strip() if en_match else None
+    logging.info("正则匹配结果：%s", {
+    "zh_match": zh_match,
+    "en_match": en_match,
+    "zh_name": zh_name,
+    "en_name": en_name
+    })
     return (zh_name, en_name) if zh_name or en_name else None
 
 
@@ -587,14 +593,26 @@ async def steam_fuzzy_search(session, search_name, region_code, lang):
     )
     async with session.get(search_url) as resp:
         data = await resp.json()
+
     items = data.get("items", [])
-    # 优先匹配完全一致的游戏名
+    if not items:
+        return None
+
+    lower_input = search_name.lower()
+
+    # 1. 查找完全匹配（中文或英文）
+    for item in items:
+        if item["name"].lower() == lower_input:
+            return item
+
+    # 2. 查找包含匹配，避免提及数字
     for item in items:
         name = item["name"].lower()
-        if name == search_name.lower() or name.startswith(search_name.lower()):
+        if lower_input in name and not re.search(r'\d', name.replace(lower_input, '')):
             return item
-    # 否则返回第一条
-    return items[0] if items else None
+
+    # 3. 回退模糊的第一个
+    return items[0]
 
 
 @bot.tree.command(name="steam", description="查询 Steam 游戏信息")
