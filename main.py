@@ -338,8 +338,8 @@ async def choose(interaction: discord.Interaction, options: str):
     # 随机选择
     result = random.choice(choices)
     
-    logging.info(f"选项:{options}")
-    logging.info(f"结果:{result}")
+    logging.info(f"选项: {options}")
+    logging.info(f"结果: {result}")
     
     await interaction.followup.send(f"💭 咋办寻思：**{result}**")
 
@@ -347,7 +347,7 @@ async def choose(interaction: discord.Interaction, options: str):
 # ============================== #
 # setrole 指令
 # ============================== #
-@bot.tree.command(name="setrole", description="设置专属的角色风格")
+@bot.tree.command(name="setrole", description="设置专属的角色风格，或者希望bot记住的事情")
 async def setrole(interaction: discord.Interaction, prompt: str):
     user_id = str(interaction.user.id)
     user_roles[user_id] = prompt
@@ -439,8 +439,8 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
         )
         logging.info(f"✅ 模型调用成功：{response.model}")
         reply = response.choices[0].message.content or "❌ GPT 没有返回内容。"
-        await interaction.followup.send(f"你抽到的牌是：**{card_name}（{position}）**\n"
-                                        f"你的困惑是：**{wish_text}**\n\n"
+        await interaction.followup.send(f"你的困惑是：**{wish_text}**\n"
+                                        f"你抽到的牌是：**{card_name}（{position}）**\n\n"
                                         f"{reply}")
         
         logging.info(f"用户: {user_id} ")
@@ -773,7 +773,7 @@ async def help_command(interaction: discord.Interaction):
            "`/fortune` - 占卜你的今日运势并解读\n"
            "`/steam <游戏名称> [地区]` - 查询 Steam 游戏信息\n"
            "`/timezone` - 显示当前时间与全球多个时区的对照\n\n"
-           "`/setrole <风格设定>` - 设置专属的角色风格\n"
+           "`/setrole <风格设定>` - 设置专属的角色风格，或者希望bot记住的事情\n"
            "`/rolecheck` - 查看你的角色设定\n"
            "`/resetrole` - 清除你的角色设定，恢复默认风格\n"
            "`/summarycheck` - 查看你的对话摘要（超过100条才有）\n"
