@@ -519,7 +519,12 @@ async def timezone(interaction: discord.Interaction):
         "🇦🇺 澳大利亚（珀斯）": "Australia/Perth",
         "🇦🇺 澳大利亚（阿德莱德）": "Australia/Adelaide",
         "🇦🇺 澳大利亚（悉尼）": "Australia/Sydney",
-        "🇯🇵 日本": "Asia/Tokyo"
+        "🇯🇵 日本": "Asia/Tokyo",
+        
+        "🇨🇦 加拿大（温哥华）": "America/Vancouver",
+        "🇨🇦 加拿大（埃德蒙顿）": "America/Edmonton",
+        "🇨🇦 加拿大（多伦多）": "America/Toronto",
+        "🇬🇧 英国（伦敦）": "Europe/London"
     }
 
     now_utc = datetime.now(pytz.utc)
