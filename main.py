@@ -143,7 +143,7 @@ def load_summaries():
         try:
             with open(SUMMARY_FILE, "r", encoding="utf-8") as f:
                 user_summaries = json.load(f)
-            logging.info(f"已从 {SUMMARY_FILE} 加载摘要，共 {len(user_summaries)} 个用户")
+            logging.info(f"✅ 已从 {SUMMARY_FILE} 加载摘要，共 {len(user_summaries)} 个用户")
         except Exception as e:
             logging.warning(f"摘要读取失败，已忽略：{e}")
             user_summaries = {}
@@ -217,7 +217,7 @@ def load_roles():
         try:
             with open(ROLE_FILE, "r", encoding="utf-8") as f:
                 user_roles = json.load(f)
-            logging.info(f"已从 {ROLE_FILE} 加载用户 role，共 {len(user_roles)} 个")
+            logging.info(f"✅ 已从 {ROLE_FILE} 加载用户 role，共 {len(user_roles)} 个")
         except Exception as e:
             logging.warning(f"⚠️ 读取 role 失败，已忽略：{e}")
             user_roles = {}
@@ -311,7 +311,7 @@ async def ask(interaction: discord.Interaction, prompt: str):
                 max_tokens=1000,
                 timeout=60,
             )
-            logging.info(f"模型调用成功：{response.model}")
+            logging.info(f"✅ 模型调用成功：{response.model}")
             logging.info(f"用户提问：{prompt}")
 
             reply = response.choices[0].message.content or "GPT 没有返回内容。"
@@ -446,7 +446,7 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
             max_tokens=1000,
             timeout=60,
         )
-        logging.info(f"模型调用成功：{response.model}")
+        logging.info(f"✅ 模型调用成功：{response.model}")
         logging.info(f"用户提问：{prompt}")
         reply = response.choices[0].message.content or "❌ GPT 没有返回内容。"
         await interaction.followup.send(f"你抽到的牌是：**{card_name}（{position}）**\n"
@@ -492,7 +492,7 @@ async def fortune(interaction: discord.Interaction):
             max_tokens=1000,
             timeout=60,
         )
-        logging.info(f"模型调用成功：{response.model}")
+        logging.info(f"✅ 模型调用成功：{response.model}")
         logging.info(f"用户提问：{prompt}")
         reply = response.choices[0].message.content or "❌ GPT 没有返回内容。"
         await interaction.followup.send(reply)
@@ -572,8 +572,8 @@ async def get_standard_names_by_gpt(game_name: str) -> Optional[tuple]:
                               temperature=0.1,
                               max_tokens=50,
                               timeout=20)
-    logging.info(f"模型调用成功：{response.model}")
-    logging.info(f"用户提问：{prompt}")
+    logging.info(f"✅ 模型调用成功：{response.model}")
+    # logging.info(f"用户提问：{prompt}")
     logging.info(f"GPT返回：\n{response.choices[0].message.content}")
     content = (response.choices[0].message.content or "").strip()
     # 正则匹配
@@ -693,11 +693,11 @@ async def steam(interaction: Interaction,
     store_url = f"https://store.steampowered.com/app/{app_id}"
     price_info = zh_info.get("price_overview") or en_info.get("price_overview")
     
-    logging.info(f"✅ zh price_overview: {zh_info.get('price_overview')}")
-    logging.info(f"✅ en price_overview: {en_info.get('price_overview')}")
+    # logging.info(f"✅ zh price_overview: {zh_info.get('price_overview')}")
+    # logging.info(f"✅ en price_overview: {en_info.get('price_overview')}")
     logging.info(f"🎮 游戏名称：{display_zh_name} + {display_en_name}")
     logging.info(f"🔗 商店链接：{store_url}")
-    logging.info(f"💰 价格信息：{price_info}")
+    # logging.info(f"💰 价格信息：{price_info}")
     logging.info(f"🌐 地区：{region_code}")
 
     if price_info:
