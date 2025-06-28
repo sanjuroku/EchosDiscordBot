@@ -10,11 +10,9 @@ import pytz
 import logging
 from discord.ext import commands
 from openai import OpenAI
-#from keep_alive import keep_alive  # 后面加的保持在线功能
 from openai.types.chat import ChatCompletionMessageParam
 from datetime import datetime
 from asyncio_throttle.throttler import Throttler
-# steam查询依赖包
 from discord import Interaction, Embed, app_commands
 from typing import Optional
 import aiohttp
@@ -29,8 +27,6 @@ logging.basicConfig(
         logging.StreamHandler()  # 输出到控制台
     ]
 )
-
-# tail -f bot.log  # 实时查看日志
 
 logging.info("程序开始运行")
 
@@ -64,8 +60,8 @@ async def gpt_call(*args, **kwargs):
 
 # 初始化 Discord bot
 intents = discord.Intents.default()
-intents.message_content = True  # 如果需要读取消息内容
-intents.members = True  # 如果需要读取成员列表或状态
+intents.message_content = True 
+intents.members = True 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # 初始化 OpenAI 客户端
@@ -276,12 +272,6 @@ async def ask(interaction: discord.Interaction, prompt: str):
         # 裁剪用于聊天上下文
         chat_context = history[-MAX_HISTORY:]
 
-        # 如果历史太长则先摘要
-        # if len(history) >= SUMMARY_TRIGGER:
-        #summarize_history(user_id)
-        #history = history[-MAX_HISTORY:]
-        #user_histories[user_id] = history
-
         # 构造 messages
         messages: list[ChatCompletionMessageParam] = []
 
@@ -341,9 +331,6 @@ async def ask(interaction: discord.Interaction, prompt: str):
 # ============================== #
 @bot.tree.command(name="choose", description="让咋办帮忙选选")
 async def choose(interaction: discord.Interaction, options: str):
-    """
-    用法示例：/choose 猫 狗 企鹅 火锅
-    """
     await interaction.response.defer()
 
     # 分割用户输入的字符串
@@ -438,7 +425,6 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
     }]
 
     try:
-        #response = client.chat.completions.create(
         response = await gpt_call(
             model="gpt-4.1",
             messages=messages,
@@ -447,7 +433,7 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
             timeout=60,
         )
         logging.info(f"✅ 模型调用成功：{response.model}")
-        logging.info(f"用户提问：{prompt}")
+        # logging.info(f"用户提问：{prompt}")
         reply = response.choices[0].message.content or "❌ GPT 没有返回内容。"
         await interaction.followup.send(f"你抽到的牌是：**{card_name}（{position}）**\n"
                                         f"你的困惑是：**{wish_text}**\n\n"
@@ -484,7 +470,6 @@ async def fortune(interaction: discord.Interaction):
     }]
 
     try:
-        #response = client.chat.completions.create(
         response = await gpt_call(
             model="gpt-4.1",
             messages=messages,
@@ -493,7 +478,7 @@ async def fortune(interaction: discord.Interaction):
             timeout=60,
         )
         logging.info(f"✅ 模型调用成功：{response.model}")
-        logging.info(f"用户提问：{prompt}")
+        # logging.info(f"用户提问：{prompt}")
         reply = response.choices[0].message.content or "❌ GPT 没有返回内容。"
         await interaction.followup.send(reply)
     except Exception as e:
@@ -638,7 +623,7 @@ async def steam(interaction: Interaction,
         return
     zh_name, en_name = names
 
-    # 2. 依次用“中文名-英文名-原始名”去 Steam 搜索（优先中文）
+    # 2. 依次用"中文名-英文名-原始名"去 Steam 搜索（优先中文）
     async with aiohttp.ClientSession() as session:
         found = None
         app_id = None
@@ -662,6 +647,7 @@ async def steam(interaction: Interaction,
         logging.info(f"🔗 搜索链接：{zh_url}")
         logging.info(f"🔗 备用链接：{en_url}")
 
+        # 使用 Accept-Language 头部来确保获取中文数据
         headers = {"Accept-Language": "zh-CN"}
         zh_resp, en_resp = await asyncio.gather(session.get(zh_url, headers=headers),
                                                 session.get(en_url))
@@ -697,7 +683,6 @@ async def steam(interaction: Interaction,
     # logging.info(f"✅ en price_overview: {en_info.get('price_overview')}")
     logging.info(f"🎮 游戏名称：{display_zh_name} + {display_en_name}")
     logging.info(f"🔗 商店链接：{store_url}")
-    # logging.info(f"💰 价格信息：{price_info}")
     logging.info(f"🌐 地区：{region_code}")
 
     if price_info:
@@ -791,5 +776,4 @@ async def help_command(interaction: discord.Interaction):
 load_histories()
 load_summaries()
 load_roles()
-#keep_alive()
 bot.run(TOKEN)
