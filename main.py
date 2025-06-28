@@ -577,13 +577,13 @@ async def get_standard_names_by_gpt(game_name: str) -> Optional[tuple]:
     en_match = re.search(r"英文名[:：]\s*(.+)", content)
     zh_name = zh_match.group(1).strip() if zh_match else None
     en_name = en_match.group(1).strip() if en_match else None
-    logging.info(
+    """ logging.info(
         f"正则匹配结果：\n"
         f"  中文匹配：{zh_match}\n"
         f"  英文匹配：{en_match}\n"
         f"  中文名称：{zh_name}\n"
         f"  英文名称：{en_name}"
-    )
+    ) """
     return (zh_name, en_name) if zh_name or en_name else None
 
 
@@ -651,14 +651,15 @@ async def steam(interaction: Interaction,
             await interaction.followup.send("❌ Steam商店未找到匹配的游戏，请检查输入。")
             return
 
-        # 3. 获取游戏详情（默认cn和us）
-        zh_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc=cn&l=zh"
-        en_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc=us&l=en"
+        # 3. 获取游戏详情
+        zh_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc={region_code}&l=zh"
+        en_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc={region_code}&l=en"
         logging.info(f"🔍 正在搜索游戏：{names}")
         logging.info(f"🔗 搜索链接：{zh_url}")
         logging.info(f"🔗 备用链接：{en_url}")
 
-        zh_resp, en_resp = await asyncio.gather(session.get(zh_url),
+        headers = {"Accept-Language": "zh-CN"}
+        zh_resp, en_resp = await asyncio.gather(session.get(zh_url, headers=headers),
                                                 session.get(en_url))
 
         zh_data = await zh_resp.json()
@@ -680,11 +681,14 @@ async def steam(interaction: Interaction,
     display_en_name = en_info.get("name") or en_name or "Unknown"
     desc = zh_info.get("short_description") or en_info.get(
         "short_description") or "暂无简介"
+    
     logging.info(f"✅ zh short_description: {zh_info.get('short_description')}")
     logging.info(f"✅ en short_description: {en_info.get('short_description')}")
+    
     header = zh_info.get("header_image") or en_info.get("header_image")
     store_url = f"https://store.steampowered.com/app/{app_id}"
     price_info = zh_info.get("price_overview") or en_info.get("price_overview")
+    
     logging.info(f"✅ zh price_overview: {zh_info.get('price_overview')}")
     logging.info(f"✅ en price_overview: {en_info.get('price_overview')}")
     logging.info(f"🎮 游戏名称：{display_zh_name} + {display_en_name}")
