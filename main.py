@@ -300,7 +300,7 @@ async def ask(interaction: discord.Interaction, prompt: str):
                 timeout=60,
             )
             logging.info(f"✅ 模型调用成功：{response.model}")
-            logging.info(f"用户提问：{prompt}")
+            logging.info(f"用户 {user_id} 提问：{prompt}")
 
             reply = response.choices[0].message.content or "GPT 没有返回内容。"
 
@@ -339,6 +339,9 @@ async def choose(interaction: discord.Interaction, options: str):
 
     # 随机选择
     result = random.choice(choices)
+    
+    logging.info(f"选项:{options}\n结果:{result}")
+    
     await interaction.followup.send(f"💭 咋办寻思：**{result}**")
 
 
@@ -351,6 +354,8 @@ async def setrole(interaction: discord.Interaction, prompt: str):
     user_roles[user_id] = prompt
     save_roles()
     await interaction.response.send_message("✅ 角色设定保存了喵！")
+    
+    logging.info(f"用户 {user_id} 设定了角色风格:{prompt}")
 
 
 # ============================== #
@@ -376,6 +381,9 @@ async def resetrole(interaction: discord.Interaction):
         user_roles.pop(user_id)
         save_roles()
         await interaction.response.send_message("✅ 已清除你的自定义角色设定，恢复默认风格喵！")
+        
+        logging.info(f"用户 {user_id} 清除了自定义角色设定")
+        
     else:
         await interaction.response.send_message("ℹ️ 你还没有设置过角色风格哦，当前使用的就是默认设定～")
 
@@ -436,6 +444,8 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
         await interaction.followup.send(f"你抽到的牌是：**{card_name}（{position}）**\n"
                                         f"你的困惑是：**{wish_text}**\n\n"
                                         f"{reply}")
+        
+        logging.info(f"用户 {user_id} \n困惑：{wish_text}\n抽取的塔罗牌：{card_name}（{position}）")
 
     except Exception as e:
         await interaction.followup.send(f"❌ 出错了：{str(e)}")
@@ -479,6 +489,9 @@ async def fortune(interaction: discord.Interaction):
         # logging.info(f"用户提问：{prompt}")
         reply = response.choices[0].message.content or "❌ GPT 没有返回内容。"
         await interaction.followup.send(reply)
+        
+        logging.info(f"用户 {user_id} 占卜今日运势\n抽取的塔罗牌：{card_name}（{position}）")
+        
     except Exception as e:
         await interaction.followup.send(f"❌ 出错了：{str(e)}")
 
@@ -520,6 +533,8 @@ async def timezone(interaction: discord.Interaction):
 
     message = "🕒 当前时间对照表：\n\n" + "\n".join(time_table)
     await interaction.followup.send(message)
+    
+    logging.info("✅ 已发送当前时间对照表")
 
 
 # ============================== #
@@ -745,6 +760,8 @@ async def reset(interaction: discord.Interaction):
     save_summaries()
     save_roles()
     await interaction.response.send_message("✅ 你的历史已清空～可以开始新的提问啦！")
+    
+    logging.info(f"用户 {user_id} 重置清空了所有历史")
 
 
 # ============================== #
