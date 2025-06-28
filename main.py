@@ -28,8 +28,6 @@ logging.basicConfig(
     ]
 )
 
-logging.info("程序开始运行")
-
 # 获取环境变量中的 Token
 TOKEN = os.environ.get("DISCORD_TOKEN")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
@@ -229,7 +227,7 @@ async def on_ready():
     try:
         # 设置状态和活动
         activity = discord.CustomActivity(name="发出了咋办的声音")
-        await bot.change_presence(status=discord.Status.online,
+        await bot.change_presence(status=discord.Status.idle,
                                   activity=activity)
 
         synced = await bot.tree.sync()
