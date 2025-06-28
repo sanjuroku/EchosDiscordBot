@@ -7,6 +7,7 @@ import discord
 import random
 import asyncio
 import pytz
+import logging
 from discord.ext import commands
 from openai import OpenAI
 #from keep_alive import keep_alive  # 后面加的保持在线功能
@@ -18,6 +19,20 @@ from discord import Interaction, Embed, app_commands
 from typing import Optional
 import aiohttp
 import re
+
+#写入日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.FileHandler("bot.log", encoding='utf-8'),
+        logging.StreamHandler()  # 输出到控制台
+    ]
+)
+
+# tail -f bot.log  # 实时查看日志
+
+logging.info("程序开始运行")
 
 # 获取环境变量中的 Token
 TOKEN = os.environ.get("DISCORD_TOKEN")
@@ -91,7 +106,7 @@ def save_histories():
         with open(HISTORY_FILE, "w", encoding="utf-8") as f:
             json.dump(user_histories, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print("保存历史记录出错：", e)
+        logging.error("保存历史记录出错：", e)
 
 
 def load_histories():
@@ -101,9 +116,9 @@ def load_histories():
         try:
             with open(HISTORY_FILE, "r", encoding="utf-8") as f:
                 user_histories = json.load(f)
-            print(f"✅ 已从 {HISTORY_FILE} 加载历史记录，共 {len(user_histories)} 个用户")
+            logging.info(f"✅ 已从 {HISTORY_FILE} 加载历史记录，共 {len(user_histories)} 个用户")
         except Exception as e:
-            print("⚠️ 读取历史记录失败，已忽略：", e)
+            logging.warning("⚠️ 读取历史记录失败，已忽略：", e)
             user_histories = {}
     else:
         user_histories = {}
@@ -118,7 +133,7 @@ def save_summaries():
         with open(SUMMARY_FILE, "w", encoding="utf-8") as f:
             json.dump(user_summaries, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print("❌ 保存摘要失败：", e)
+        logging.error("❌ 保存摘要失败：", e)
 
 
 def load_summaries():
@@ -128,9 +143,9 @@ def load_summaries():
         try:
             with open(SUMMARY_FILE, "r", encoding="utf-8") as f:
                 user_summaries = json.load(f)
-            print(f"已从 {SUMMARY_FILE} 加载摘要，共 {len(user_summaries)} 个用户")
+            logging.info(f"已从 {SUMMARY_FILE} 加载摘要，共 {len(user_summaries)} 个用户")
         except Exception as e:
-            print("摘要读取失败，已忽略：", e)
+            logging.warning("摘要读取失败，已忽略：", e)
             user_summaries = {}
     else:
         user_summaries = {}
@@ -146,8 +161,8 @@ async def summarize_history(user_id: str):
         return
 
     try:
-        print(f"正在为用户 {user_id} 生成摘要...")
-        print(f"摘要开始前的历史内容：{len(history)}")
+        logging.info(f"正在为用户 {user_id} 生成摘要...")
+        logging.info(f"摘要开始前的历史内容：{len(history)}")
 
         summary_prompt = [{
             "role":
@@ -156,7 +171,7 @@ async def summarize_history(user_id: str):
             "你是一个AI对话助手，任务是将以下所有从头到尾的JSON历史对话总结为简洁、清楚的背景信息，以便在未来对话中作为 context 使用，不要包含具体提问或回答，仅保留重要背景和用户偏好："
         }, *history]
 
-        #print(summary_prompt)
+        #logging.info(summary_prompt)
 
         #summary_response = client.chat.completions.create(
         summary_response = await gpt_call(
@@ -170,17 +185,17 @@ async def summarize_history(user_id: str):
         summary_text = summary_response.choices[0].message.content or ""
         user_summaries[user_id] = summary_text
         await asyncio.to_thread(save_summaries)
-        print(f"✅ 用户 {user_id} 摘要完成")
+        logging.info(f"✅ 用户 {user_id} 摘要完成")
 
         # 清除早期对话，只保留最后 50 条
         preserved = history[-50:]
         user_histories[user_id] = preserved
         save_histories()
 
-        print(f"用户 {user_id} 的历史已清理，仅保留最近 {len(preserved)} 条对话")
+        logging.info(f"用户 {user_id} 的历史已清理，仅保留最近 {len(preserved)} 条对话")
 
     except Exception as e:
-        print(f"⚠️ 为用户 {user_id} 生成摘要失败：", e)
+        logging.warning(f"⚠️ 为用户 {user_id} 生成摘要失败：", e)
 
 
 # ============================== #
@@ -192,7 +207,7 @@ def save_roles():
         with open(ROLE_FILE, "w", encoding="utf-8") as f:
             json.dump(user_roles, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print("❌ 保存 role 失败：", e)
+        logging.error("❌ 保存 role 失败：", e)
 
 
 def load_roles():
@@ -202,9 +217,9 @@ def load_roles():
         try:
             with open(ROLE_FILE, "r", encoding="utf-8") as f:
                 user_roles = json.load(f)
-            print(f"已从 {ROLE_FILE} 加载用户 role，共 {len(user_roles)} 个")
+            logging.info(f"已从 {ROLE_FILE} 加载用户 role，共 {len(user_roles)} 个")
         except Exception as e:
-            print("⚠️ 读取 role 失败，已忽略：", e)
+            logging.warning("⚠️ 读取 role 失败，已忽略：", e)
             user_roles = {}
     else:
         user_roles = {}
@@ -222,10 +237,10 @@ async def on_ready():
                                   activity=activity)
 
         synced = await bot.tree.sync()
-        print(f"✅ Slash commands synced: {len(synced)} 个指令已注册")
+        logging.info(f"✅ Slash commands synced: {len(synced)} 个指令已注册")
     except Exception as e:
-        print(e)
-    print(f"✅ 已登录为 {bot.user}")
+        logging.error(e)
+    logging.info(f"✅ 已登录为 {bot.user}")
 
 
 # ============================== #
@@ -249,7 +264,7 @@ async def on_message(message):
 # ============================== #
 @bot.tree.command(name="ask", description="咋办")
 async def ask(interaction: discord.Interaction, prompt: str):
-    await interaction.response.defer()  # 先回个“处理中”
+    await interaction.response.defer() 
     user_id = str(interaction.user.id)
     lock = get_user_lock(user_id)
 
@@ -296,8 +311,8 @@ async def ask(interaction: discord.Interaction, prompt: str):
                 max_tokens=1000,
                 timeout=60,
             )
-            print(f"模型调用成功：{response.model}")
-            print(f"用户提问：{prompt}")
+            logging.info(f"模型调用成功：{response.model}")
+            logging.info(f"用户提问：{prompt}")
 
             reply = response.choices[0].message.content or "GPT 没有返回内容。"
 
@@ -310,14 +325,14 @@ async def ask(interaction: discord.Interaction, prompt: str):
 
             # 如果历史太长则先摘要
             if len(history) >= SUMMARY_TRIGGER:
-                print("🔍 当前完整历史：", len(user_histories[user_id]))
+                logging.info("🔍 当前完整历史：", len(user_histories[user_id]))
                 await summarize_history(user_id)
 
             await interaction.followup.send(reply)
-            print(f"✅ 回复已发送给用户 {user_id}，当前历史记录条数: {len(history)}")
+            logging.info(f"✅ 回复已发送给用户 {user_id}，当前历史记录条数: {len(history)}")
 
         except Exception as e:
-            print("❌ GPT调用出错：", e)
+            logging.error("❌ GPT调用出错：", e)
             await interaction.followup.send(f"❌ 出错了：{str(e)}")
 
 
@@ -431,8 +446,8 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
             max_tokens=1000,
             timeout=60,
         )
-        print(f"模型调用成功：{response.model}")
-        print(f"用户提问：{prompt}")
+        logging.info(f"模型调用成功：{response.model}")
+        logging.info(f"用户提问：{prompt}")
         reply = response.choices[0].message.content or "❌ GPT 没有返回内容。"
         await interaction.followup.send(f"你抽到的牌是：**{card_name}（{position}）**\n"
                                         f"你的困惑是：**{wish_text}**\n\n"
@@ -477,8 +492,8 @@ async def fortune(interaction: discord.Interaction):
             max_tokens=1000,
             timeout=60,
         )
-        print(f"模型调用成功：{response.model}")
-        print(f"用户提问：{prompt}")
+        logging.info(f"模型调用成功：{response.model}")
+        logging.info(f"用户提问：{prompt}")
         reply = response.choices[0].message.content or "❌ GPT 没有返回内容。"
         await interaction.followup.send(reply)
     except Exception as e:
@@ -553,9 +568,9 @@ async def get_standard_names_by_gpt(game_name: str) -> Optional[tuple]:
                               temperature=0.1,
                               max_tokens=50,
                               timeout=20)
-    print(f"模型调用成功：{response.model}")
-    print(f"用户提问：{prompt}")
-    print("GPT返回：\n", response.choices[0].message.content)
+    logging.info(f"模型调用成功：{response.model}")
+    logging.info(f"用户提问：{prompt}")
+    logging.info("GPT返回：\n", response.choices[0].message.content)
     content = (response.choices[0].message.content or "").strip()
     # 粗暴正则匹配
     zh_match = re.search(r"中文名[:：]\s*(.+)", content)
@@ -615,17 +630,17 @@ async def steam(interaction: Interaction,
         # 3. 获取游戏详情
         zh_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc={region_code}&l=zh"
         en_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc={region_code}&l=en"
-        print(f"🔍 正在搜索游戏：{game_name}")
-        print(f"🔗 搜索链接：{zh_url}")
-        print(f"🔗 备用链接：{en_url}")
-        print(f"🌐 地区：{region_code}")
+        logging.info(f"🔍 正在搜索游戏：{game_name}")
+        logging.info(f"🔗 搜索链接：{zh_url}")
+        logging.info(f"🔗 备用链接：{en_url}")
+        logging.info(f"🌐 地区：{region_code}")
 
         zh_resp, en_resp = await asyncio.gather(session.get(zh_url),
                                                 session.get(en_url))
 
         zh_data = await zh_resp.json()
         en_data = await en_resp.json()
-        #print("debug用zh_data\n", zh_data)
+        #logging.debug("debug用zh_data\n", zh_data)
 
     app_id = str(app_id)
     zh_info = zh_data.get(str(app_id), {}).get("data", {}) if zh_data.get(
@@ -633,25 +648,25 @@ async def steam(interaction: Interaction,
     en_info = en_data.get(str(app_id), {}).get("data", {}) if en_data.get(
         str(app_id), {}).get("success") else {}
     if not zh_data.get(str(app_id), {}).get("success"):
-        print("❗ 中文 API 获取失败")
+        logging.error("❗ 中文 API 获取失败")
     if not en_data.get(str(app_id), {}).get("success"):
-        print("❗ 英文 API 获取失败")
+        logging.error("❗ 英文 API 获取失败")
 
     # 4. 构建 Embed 优先中文
     display_zh_name = zh_info.get("name") or zh_name or "未知游戏"
     display_en_name = en_info.get("name") or en_name or "Unknown"
     desc = zh_info.get("short_description") or en_info.get(
         "short_description") or "暂无简介"
-    print("✅ zh short_description:", zh_info.get("short_description"))
-    print("✅ en short_description:", en_info.get("short_description"))
+    logging.info("✅ zh short_description:", zh_info.get("short_description"))
+    logging.info("✅ en short_description:", en_info.get("short_description"))
     header = zh_info.get("header_image") or en_info.get("header_image")
     store_url = f"https://store.steampowered.com/app/{app_id}"
     price_info = zh_info.get("price_overview") or en_info.get("price_overview")
-    print("✅ zh price_overview:", zh_info.get("price_overview"))
-    print("✅ en price_overview:", en_info.get("price_overview"))
-    print(f"🎮 游戏名称：{display_zh_name} + {display_en_name}")
-    print(f"🔗 商店链接：{store_url}")
-    print(f"💰 价格信息：{price_info}")
+    logging.info("✅ zh price_overview:", zh_info.get("price_overview"))
+    logging.info("✅ en price_overview:", en_info.get("price_overview"))
+    logging.info(f"🎮 游戏名称：{display_zh_name} + {display_en_name}")
+    logging.info(f"🔗 商店链接：{store_url}")
+    logging.info(f"💰 价格信息：{price_info}")
 
     if price_info:
         currency = price_info["currency"]
