@@ -587,9 +587,14 @@ async def steam_fuzzy_search(session, search_name, region_code, lang):
     )
     async with session.get(search_url) as resp:
         data = await resp.json()
-    if data.get("items"):
-        return data["items"][0]  # 返回第一个最相关
-    return None
+    items = data.get("items", [])
+    # 优先匹配完全一致的游戏名
+    for item in items:
+        name = item["name"].lower()
+        if name == search_name.lower() or name.startswith(search_name.lower()):
+            return item
+    # 否则返回第一条
+    return items[0] if items else None
 
 
 @bot.tree.command(name="steam", description="查询 Steam 游戏信息")
