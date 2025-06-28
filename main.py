@@ -18,14 +18,13 @@ from discord import Interaction, Embed, app_commands
 from typing import Optional
 import aiohttp
 import re
-import time
 
 # 获取环境变量中的 Token
 TOKEN = os.environ.get("DISCORD_TOKEN")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 if TOKEN is None or OPENAI_API_KEY is None:
     raise ValueError(
-        "❌ 环境变量未设置，请在 Replit 的 Secrets 中添加 DISCORD_TOKEN 和 OPENAI_API_KEY")
+        "环境变量未设置，请在 Replit 的 Secrets 中添加 DISCORD_TOKEN 和 OPENAI_API_KEY")
 
 # 添加锁管理器
 user_locks: dict[str, asyncio.Lock] = {}
@@ -92,7 +91,7 @@ def save_histories():
         with open(HISTORY_FILE, "w", encoding="utf-8") as f:
             json.dump(user_histories, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print("❌ 保存历史记录出错：", e)
+        print("保存历史记录出错：", e)
 
 
 def load_histories():
@@ -129,9 +128,9 @@ def load_summaries():
         try:
             with open(SUMMARY_FILE, "r", encoding="utf-8") as f:
                 user_summaries = json.load(f)
-            print(f"📄 已从 {SUMMARY_FILE} 加载摘要，共 {len(user_summaries)} 个用户")
+            print(f"已从 {SUMMARY_FILE} 加载摘要，共 {len(user_summaries)} 个用户")
         except Exception as e:
-            print("⚠️ 摘要读取失败，已忽略：", e)
+            print("摘要读取失败，已忽略：", e)
             user_summaries = {}
     else:
         user_summaries = {}
@@ -147,8 +146,8 @@ async def summarize_history(user_id: str):
         return
 
     try:
-        print(f"📄 正在为用户 {user_id} 生成摘要...")
-        print(f"🧠 摘要开始前的历史内容：{len(history)}")
+        print(f"正在为用户 {user_id} 生成摘要...")
+        print(f"摘要开始前的历史内容：{len(history)}")
 
         summary_prompt = [{
             "role":
@@ -178,7 +177,7 @@ async def summarize_history(user_id: str):
         user_histories[user_id] = preserved
         save_histories()
 
-        print(f"🧹 用户 {user_id} 的历史已清理，仅保留最近 {len(preserved)} 条对话")
+        print(f"用户 {user_id} 的历史已清理，仅保留最近 {len(preserved)} 条对话")
 
     except Exception as e:
         print(f"⚠️ 为用户 {user_id} 生成摘要失败：", e)
@@ -203,7 +202,7 @@ def load_roles():
         try:
             with open(ROLE_FILE, "r", encoding="utf-8") as f:
                 user_roles = json.load(f)
-            print(f"📄 已从 {ROLE_FILE} 加载用户 role，共 {len(user_roles)} 个")
+            print(f"已从 {ROLE_FILE} 加载用户 role，共 {len(user_roles)} 个")
         except Exception as e:
             print("⚠️ 读取 role 失败，已忽略：", e)
             user_roles = {}
@@ -218,7 +217,7 @@ def load_roles():
 async def on_ready():
     try:
         # 设置状态和活动
-        activity = discord.CustomActivity(name="咋办")
+        activity = discord.CustomActivity(name="发出了咋办的声音")
         await bot.change_presence(status=discord.Status.online,
                                   activity=activity)
 
@@ -226,7 +225,7 @@ async def on_ready():
         print(f"✅ Slash commands synced: {len(synced)} 个指令已注册")
     except Exception as e:
         print(e)
-    print(f"🤖 已登录为 {bot.user}")
+    print(f"✅ 已登录为 {bot.user}")
 
 
 # ============================== #
@@ -335,7 +334,7 @@ async def choose(interaction: discord.Interaction, options: str):
     # 分割用户输入的字符串
     choices = options.strip().split()
     if len(choices) < 2:
-        await interaction.followup.send("⚠️ 请至少提供两个选项，例如：`/choose A B C`")
+        await interaction.followup.send("ℹ️ 请至少提供两个选项，例如：`/choose A B C`")
         return
 
     # 随机选择
@@ -434,7 +433,7 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
         )
         print(f"模型调用成功：{response.model}")
         print(f"用户提问：{prompt}")
-        reply = response.choices[0].message.content or "GPT 没有返回内容。"
+        reply = response.choices[0].message.content or "❌ GPT 没有返回内容。"
         await interaction.followup.send(f"你抽到的牌是：**{card_name}（{position}）**\n"
                                         f"你的困惑是：**{wish_text}**\n\n"
                                         f"{reply}")
@@ -480,7 +479,7 @@ async def fortune(interaction: discord.Interaction):
         )
         print(f"模型调用成功：{response.model}")
         print(f"用户提问：{prompt}")
-        reply = response.choices[0].message.content or "GPT 没有返回内容。"
+        reply = response.choices[0].message.content or "❌ GPT 没有返回内容。"
         await interaction.followup.send(reply)
     except Exception as e:
         await interaction.followup.send(f"❌ 出错了：{str(e)}")
@@ -538,8 +537,6 @@ region_choices = [
     app_commands.Choice(name="土区（土耳其里拉）", value="tr"),
     app_commands.Choice(name="阿区（阿根廷比索）", value="ar"),
 ]
-# 本地缓存（避免频繁调用）
-steam_cache = {}
 
 
 # 1. 让 GPT 返回标准中文和英文游戏名
@@ -590,15 +587,6 @@ async def steam(interaction: Interaction,
 
     region_code = region.value if region else "cn"
     region_display = region.name if region else "国区（人民币）"
-    cache_key = f"{game_name.lower()}_{region_code}"
-
-    # 缓存命中（10分钟有效）
-    now = time.time()
-    if cache_key in steam_cache:
-        cached = steam_cache[cache_key]
-        if now - cached["timestamp"] < 600:
-            await interaction.followup.send(embed=cached["embed"])
-            return
 
     # 1. GPT 标准化游戏名
     names = await get_standard_names_by_gpt(game_name)
@@ -681,13 +669,13 @@ async def steam(interaction: Interaction,
         price_text = "免费或暂无价格信息"
 
     # 构建 Embed
-    embed = Embed(title=f"# 🎮 {display_zh_name} / {display_en_name}",
+    embed = Embed(title=f"🎮 {display_zh_name} / {display_en_name}",
                   description=desc,
                   url=store_url)
-    embed.add_field(name=f"## 💰 当前价格 💰 {region_display}",
+    embed.add_field(name=f"💰 当前价格 💰 {region_display}",
                     value=price_text,
                     inline=False)
-    embed.add_field(name="## 🔗 商店链接", value=store_url, inline=False)
+    embed.add_field(name="🔗 商店链接", value=store_url, inline=False)
     if header:
         embed.set_image(url=header)
     else:
@@ -695,9 +683,6 @@ async def steam(interaction: Interaction,
             url=
             "https://store.cloudflare.steamstatic.com/public/shared/images/header/globalheader_logo.png"
         )
-
-    # 写入缓存
-    steam_cache[cache_key] = {"embed": embed, "timestamp": now}
 
     await interaction.followup.send(embed=embed)
 
