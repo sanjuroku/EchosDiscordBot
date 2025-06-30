@@ -808,19 +808,28 @@ async def get_reddit():
 CUTE_SUBREDDITS = [
     "aww", "Eyebleach", "rarepuppers", "AnimalsBeingDerps", "AnimalsOnReddit", "Catmemes", "PartyParrot", "Ornithology", "Birding"
 ]
+
+# 用于下拉选项
+subreddit_choices = [
+    app_commands.Choice(name=sub, value=sub) for sub in CUTE_SUBREDDITS
+]
+
 @bot.tree.command(name="aww", description="从Reddit上随机抽一只可爱动物")
-async def aww(interaction: discord.Interaction):
+@app_commands.describe(subreddit="可选：选择subreddit来源，不填则随机")
+@app_commands.choices(subreddit=subreddit_choices)
+async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands.Choice[str]] = None):
     await interaction.response.defer()
 
     # 调用初始化 Reddit 客户端的函数
     reddit = await get_reddit()
     
     posts = []
-    subreddit_name = random.choice(CUTE_SUBREDDITS)
-    subreddit = await reddit.subreddit(subreddit_name)
+    # 根据用户选择或随机选一个 subreddit
+    subreddit_name = subreddit.value if subreddit else random.choice(CUTE_SUBREDDITS)
+    subreddit_obj = await reddit.subreddit(subreddit_name)
 
     # 获取前 50 条热门帖子，包含图片和视频
-    async for post in subreddit.hot(limit=50):
+    async for post in subreddit_obj.hot(limit=50):
         if post.stickied:
             continue
 
