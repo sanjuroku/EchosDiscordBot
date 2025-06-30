@@ -220,32 +220,14 @@ def load_roles():
 # ============================== #
 # bot 启动
 # ============================== #
-
-# 测试服务器
-TEST_GUILD_ID = 1120505367735062568
-test_guild = discord.Object(id=TEST_GUILD_ID)
 @bot.event
 async def on_ready():
     
-    #for cmd in bot.tree.get_commands():
-    #    if cmd.name == "changestatus":
-    #        bot.tree.remove_command("changestatus")  # 删除全局注册
-    #        logging.info("🔧 删除了全局 changestatus 指令")
-    
     try:
-        # 设置状态和活动
-        activity = discord.CustomActivity(name="发出了咋办的声音")
-        await bot.change_presence(status=discord.Status.idle,
-                                  activity=activity)
-
         # 同步全局命令
         synced = await bot.tree.sync()
         
-        # 同步测试服务器命令
-        synced_test = await bot.tree.sync(guild=test_guild)
-        
         logging.info(f"✅ Slash commands synced: {len(synced)} 个全局指令已注册")
-        logging.info(f"✅ Slash commands synced to test guild: {len(synced_test)} 个测试服务器指令已注册")
 
     except Exception as e:
         logging.error(e)
@@ -811,7 +793,6 @@ activity_map = {
     "自定义": lambda text: discord.CustomActivity(name=text)
 }
 
-@app_commands.guilds(discord.Object(id=TEST_GUILD_ID))
 @bot.tree.command(name="changestatus", description="更改状态和活动")
 @app_commands.choices(online_status=status_choices, activity_type=activity_choices)
 @app_commands.describe(text="活动内容（可选）")
