@@ -8,6 +8,7 @@ import random
 import asyncio
 import pytz
 import logging
+import asyncpraw
 from discord.ext import commands
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam
@@ -64,6 +65,17 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 # 初始化 OpenAI 客户端
 client = OpenAI(api_key=OPENAI_API_KEY)
+
+# 初始化 Reddit 客户端
+reddit = asyncpraw.Reddit(
+    client_id=os.environ.get("REDDIT_CLIENT_ID"),
+    client_secret=os.environ.get("REDDIT_CLIENT_SECRET"),
+    user_agent=os.environ.get("REDDIT_USER_AGENT"),
+)
+
+CUTE_SUBREDDITS = [
+    "aww", "Eyebleach", "rarepuppers", "AnimalsBeingDerps", "AnimalsOnReddit", "Catmemes"
+]
 
 # ============================== #
 # 全局变量与常量定义
@@ -795,6 +807,77 @@ async def steam(interaction: Interaction,
     await interaction.followup.send(embed=embed)
 
 # ============================== #
+# /aww 指令： 随机获取reddit上的可爱动物
+# ============================== #
+@bot.tree.command(name="aww", description="从Reddit上随机抽一只可爱动物")
+async def aww(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    subreddit_name = random.choice(CUTE_SUBREDDITS)
+    subreddit = await reddit.subreddit(subreddit_name)
+
+    # 获取前 50 条热门帖子，包含图片和视频
+    posts = []
+    async for post in subreddit.hot(limit=50):
+        if post.stickied:
+            continue
+
+        # 图片链接
+        if post.url.endswith((".jpg", ".jpeg", ".png", ".gif")):
+            posts.append(post)
+
+        # Reddit 原生视频（非外链）
+        elif post.is_video and isinstance(post.media, dict) and "reddit_video" in post.media:
+            posts.append(post)
+
+        # gifv（Imgur 或 Gfycat）
+        elif post.url.endswith((".mp4", ".webm", ".gifv")):
+            posts.append(post)
+
+    logging.info(f"🔍 从 r/{subreddit_name} 获取 {len(posts)} 条图片/视频帖子")
+
+    if not posts:
+        await interaction.followup.send("没找到合适的结果捏TT，请稍后再试。")
+        return
+
+    selected_post = random.choice(posts)
+    
+    title = selected_post.title
+    if len(title) > 256:
+        title = title[:253] + "..."
+
+    embed = discord.Embed(
+        title=title,
+        url=f"https://reddit.com{selected_post.permalink}",
+        description=f"From r/{subreddit_name}",
+    )
+    
+    # 如果是图片或 gif
+    if selected_post.url.endswith((".jpg", ".jpeg", ".png", ".gif")):
+        embed.set_image(url=selected_post.url)
+        logging.info(f"🐾 图片链接：{selected_post.url}")
+
+    # 如果是 Reddit 原生视频
+    elif (selected_post.is_video and selected_post.media and isinstance(selected_post.media, dict) and "reddit_video" in selected_post.media):
+        video_url = selected_post.media["reddit_video"]["fallback_url"]
+        embed.description = (embed.description or "") + f"\n[🎥 click to watch]({video_url})"
+        logging.info(f"🐾 视频链接：{video_url}")
+
+    # 如果是 mp4/webm
+    elif selected_post.url.endswith((".mp4", ".webm")):
+        embed.description = (embed.description or "") + f"\n[🎥 click to watch]({selected_post.url})"
+        logging.info(f"🐾 mp4/webm链接：{selected_post.url}")
+    
+    elif selected_post.url.endswith(".gifv"):
+        mp4_url = selected_post.url.replace(".gifv", ".mp4")
+        embed.description = (embed.description or "") + f"\n[🎥 click to watch]({mp4_url})"
+        logging.info(f"🐾 gifv转mp4链接：{mp4_url}")
+
+    logging.info(f"🐾 随机抽取了 r/{subreddit_name} 的帖子：{title} ")
+
+    await interaction.followup.send(embed=embed)
+
+# ============================== #
 # summary 指令
 # ============================== #
 @bot.tree.command(name="summary", description="总结以往对话生成摘要")
@@ -956,6 +1039,7 @@ async def help_command(interaction: discord.Interaction):
            "`/choose <选项1> <选项2> ...` - 让咋办帮忙选选\n"
            "`/tarot <困惑>` - 抽一张塔罗牌解读你的困惑\n"
            "`/fortune` - 占卜你的今日运势并解读\n"
+           "`/aww` - 从Reddit上随机抽一只可爱动物\n"
            "`/steam <游戏名称> [地区]` - 查询 Steam 游戏信息\n"
            "`/timezone` - 显示当前时间与全球多个时区的对照\n\n"
            "`/setrole <风格设定>` - 设置专属的角色风格，或者希望bot记住的事情\n"
