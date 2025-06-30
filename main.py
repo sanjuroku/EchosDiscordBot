@@ -220,14 +220,51 @@ def load_roles():
 # ============================== #
 # bot 启动
 # ============================== #
+status_map = {
+    "在线": discord.Status.online,
+    "闲置": discord.Status.idle,
+    "请勿打扰": discord.Status.dnd,
+    "隐身": discord.Status.invisible
+}
+
+activity_map = {
+    "正在玩": lambda text: discord.Game(name=text),
+    "正在看": lambda text: discord.Activity(type=discord.ActivityType.watching, name=text),
+    "正在听": lambda text: discord.Activity(type=discord.ActivityType.listening, name=text),
+    "自定义": lambda text: discord.CustomActivity(name=text)
+}
+
 @bot.event
 async def on_ready():
     
     try:
-        # 设置状态和活动
-        activity = discord.CustomActivity(name="发出了咋办的声音")
-        await bot.change_presence(status=discord.Status.idle,
-                                  activity=activity)
+        # 默认状态活动
+        #activity = discord.CustomActivity(name="发出了咋办的声音")
+        #await bot.change_presence(status=discord.Status.idle,activity=activity)
+        status = discord.Status.idle
+        text = "发出了咋办的声音"
+        activity = discord.CustomActivity(name=text)
+        
+        logging.info(f"✅ 已设置默认状态：{status} - {activity} {text}") 
+        
+        # 尝试加载上次保存的状态
+        if os.path.exists("last_presence.json"):
+            with open("last_presence.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+            
+            status = status_map.get(data.get("status"), discord.Status.idle)
+            activity_type = data.get("activity_type")
+            text = data.get("text")
+
+            if activity_type and text:
+                activity_func = activity_map.get(activity_type)
+                if activity_func:
+                    activity = activity_func(text)
+            
+            logging.info(f"✅ 已恢复上次状态：{status} - {activity_type} {text}") 
+        
+        # 设置状态
+        await bot.change_presence(status=status, activity=activity)
         
         # 同步全局命令
         synced = await bot.tree.sync()
@@ -788,20 +825,6 @@ activity_choices = [
     app_commands.Choice(name="自定义", value="自定义"),
 ]
 
-status_map = {
-    "在线": discord.Status.online,
-    "闲置": discord.Status.idle,
-    "请勿打扰": discord.Status.dnd,
-    "隐身": discord.Status.invisible
-}
-
-activity_map = {
-    "正在玩": lambda text: discord.Game(name=text),
-    "正在看": lambda text: discord.Activity(type=discord.ActivityType.watching, name=text),
-    "正在听": lambda text: discord.Activity(type=discord.ActivityType.listening, name=text),
-    "自定义": lambda text: discord.CustomActivity(name=text)
-}
-
 @bot.tree.command(name="changestatus", description="更改状态和活动")
 @app_commands.choices(online_status=status_choices, activity_type=activity_choices)
 @app_commands.describe(text="活动内容（可选）")
@@ -828,7 +851,17 @@ async def change_status(
 
         await bot.change_presence(status=status, activity=activity)
         await interaction.response.send_message("✅ Bot 状态已更新！", ephemeral=True)
+        
+        # 保存设置到本地文件
+        with open("status_config.json", "w", encoding="utf-8") as f:
+            json.dump({
+                "status": online_status.value,
+                "activity_type": activity_type.value if activity_type else "",
+                "text": text or ""
+            }, f, ensure_ascii=False, indent=2)
+        
         logging.info(f"🟢 状态已更改为 {online_status.value}" + (f" / {activity_type.value}：{text}" if activity_type and text else ""))
+        
     except Exception as e:
         await interaction.response.send_message(f"❌ 出错了：{str(e)}", ephemeral=True)
 
