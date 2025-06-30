@@ -227,10 +227,10 @@ test_guild = discord.Object(id=TEST_GUILD_ID)
 @bot.event
 async def on_ready():
     
-    for cmd in bot.tree.get_commands():
-        if cmd.name == "changestatus":
-            bot.tree.remove_command("changestatus")  # 删除全局注册
-            logging.info("🔧 删除了全局 changestatus 指令")
+    #for cmd in bot.tree.get_commands():
+    #    if cmd.name == "changestatus":
+    #        bot.tree.remove_command("changestatus")  # 删除全局注册
+    #        logging.info("🔧 删除了全局 changestatus 指令")
     
     try:
         # 设置状态和活动
