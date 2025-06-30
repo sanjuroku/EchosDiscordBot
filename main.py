@@ -804,7 +804,7 @@ async def get_reddit():
     )
 
 CUTE_SUBREDDITS = [
-    "aww", "Eyebleach", "rarepuppers", "AnimalsBeingDerps", "AnimalsOnReddit", "Catmemes", "PartyParrot", "Ornithology", "Birding"
+    "aww", "Eyebleach", "rarepuppers", "AnimalsBeingDerps", "AnimalsOnReddit", "Catmemes", "PartyParrot", "Ornithology", "Birding", "birdwatching", "parrots", "BirdsArentReal"
 ]
 
 # 用于下拉选项
