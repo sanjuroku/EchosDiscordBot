@@ -820,7 +820,6 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
 
     # 调用初始化 Reddit 客户端的函数
     reddit = await get_reddit()
-    await reddit.close()
     
     posts = []
     # 根据用户选择或随机选一个 subreddit
@@ -890,7 +889,8 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
         logging.info(f"🐾 gifv转mp4链接：{mp4_url}")
 
     logging.info(f"🐾 随机抽取了 r/{subreddit_name} 的帖子：{title} ")
-
+    
+    await reddit.close()
     await interaction.followup.send(embed=embed)
 
 # ============================== #
