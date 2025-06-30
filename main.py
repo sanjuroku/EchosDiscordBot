@@ -248,8 +248,8 @@ async def on_ready():
         logging.info(f"✅ 已设置默认状态：{status} - {text}") 
         
         # 尝试加载上次保存的状态
-        if os.path.exists("last_presence.json"):
-            with open("last_presence.json", "r", encoding="utf-8") as f:
+        if os.path.exists("status_config.json"):
+            with open("status_config.json", "r", encoding="utf-8") as f:
                 data = json.load(f)
             
             status = status_map.get(data.get("status"), discord.Status.idle)
