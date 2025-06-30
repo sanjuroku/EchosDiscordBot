@@ -165,7 +165,7 @@ async def summarize_history(user_id: str):
             "role":
             "system",
             "content":
-            "请你将以下所有从头到尾的JSON历史对话总结为简洁、清楚的背景信息，以便在未来对话中作为 context 使用。\n不要包含具体提问或回答，仅保留重要背景和用户偏好："
+            "请你总结以下所有从头到尾的JSON历史对话，以便在未来对话中作为 context 使用。\n不要包含具体提问或回答，仅保留重要背景和用户偏好：\n\n"
         }, *history]
 
         summary_response = await gpt_call(
@@ -801,8 +801,9 @@ async def summary(interaction: discord.Interaction):
             "role":
             "system",
             "content":
-            "请你将以下所有从头到尾的JSON历史对话总结为简洁、清楚的背景信息，以便在未来对话中作为 context 使用。\n不要包含具体提问或回答，仅保留重要背景和用户偏好："
+            "请你总结以下所有从头到尾的JSON历史对话，以便在未来对话中作为 context 使用。\n不要包含具体提问或回答，仅保留重要背景和用户偏好：\n\n"
         }, *history]
+        logging.info(f"摘要内容：{summary_prompt}")
 
         summary_response = await gpt_call(
             model="gpt-4.1",
