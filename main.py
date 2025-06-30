@@ -245,7 +245,7 @@ async def on_ready():
         text = "发出了咋办的声音"
         activity = discord.CustomActivity(name=text)
         
-        logging.info(f"✅ 已设置默认状态：{status} - {activity} {text}") 
+        logging.info(f"✅ 已设置默认状态：{status} - {text}") 
         
         # 尝试加载上次保存的状态
         if os.path.exists("last_presence.json"):
