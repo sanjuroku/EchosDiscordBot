@@ -66,17 +66,6 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 # 初始化 OpenAI 客户端
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# 初始化 Reddit 客户端
-reddit = asyncpraw.Reddit(
-    client_id=os.environ.get("REDDIT_CLIENT_ID"),
-    client_secret=os.environ.get("REDDIT_CLIENT_SECRET"),
-    user_agent=os.environ.get("REDDIT_USER_AGENT"),
-)
-
-CUTE_SUBREDDITS = [
-    "aww", "Eyebleach", "rarepuppers", "AnimalsBeingDerps", "AnimalsOnReddit", "Catmemes"
-]
-
 # ============================== #
 # 全局变量与常量定义
 # ============================== #
@@ -264,7 +253,6 @@ activity_map = {
 
 @bot.event
 async def on_ready():
-    
     try:
         activity_type = None
         text = None
@@ -809,15 +797,29 @@ async def steam(interaction: Interaction,
 # ============================== #
 # /aww 指令： 随机获取reddit上的可爱动物
 # ============================== #
+# 初始化 Reddit 客户端的函数
+async def get_reddit():
+    return asyncpraw.Reddit(
+        client_id=os.environ.get("REDDIT_CLIENT_ID"),
+        client_secret=os.environ.get("REDDIT_CLIENT_SECRET"),
+        user_agent=os.environ.get("REDDIT_USER_AGENT"),
+    )
+
+CUTE_SUBREDDITS = [
+    "aww", "Eyebleach", "rarepuppers", "AnimalsBeingDerps", "AnimalsOnReddit", "Catmemes"
+]
 @bot.tree.command(name="aww", description="从Reddit上随机抽一只可爱动物")
 async def aww(interaction: discord.Interaction):
     await interaction.response.defer()
 
+    # 调用初始化 Reddit 客户端的函数
+    reddit = await get_reddit()
+    
+    posts = []
     subreddit_name = random.choice(CUTE_SUBREDDITS)
     subreddit = await reddit.subreddit(subreddit_name)
 
     # 获取前 50 条热门帖子，包含图片和视频
-    posts = []
     async for post in subreddit.hot(limit=50):
         if post.stickied:
             continue
