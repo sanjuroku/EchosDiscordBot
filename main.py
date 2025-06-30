@@ -160,13 +160,24 @@ async def summarize_history(user_id: str):
     try:
         logging.info(f"正在为用户 {user_id} 生成摘要...")
         logging.info(f"摘要开始前的历史内容：{len(history)}")
+        
+        history_text = "\n".join([
+            f"User：{msg['content']}\n" if msg["role"] == "user" else f"Assistant：{msg['content']}\n"
+            for msg in history if msg["role"] in ["user", "assistant"]
+        ])
 
-        summary_prompt = [{
+        summary_prompt = [
+            {
             "role":
             "system",
             "content":
-            "请你总结所有用户和GPT之间从头到尾的历史对话content，以便在未来对话中作为 context 使用。\n\n"
-        }, *history]
+            "请你总结用户和GPT之间从头到尾的所有历史对话，用于后续对话的 context 使用。请使用第三人称、概括性语言，不要重复原话，不要加入评论或判断。重点总结用户的行为特征、情绪倾向、风格偏好和主要话题。\n"
+            },
+            {
+            "role": "user",
+            "content": f"以下是完整的对话历史：\n\n{history_text}"
+            }
+        ]
 
         summary_response = await gpt_call(
             model="gpt-4.1",
@@ -177,6 +188,9 @@ async def summarize_history(user_id: str):
         )
 
         summary_text = summary_response.choices[0].message.content or ""
+        
+        logging.info(f"摘要成功：{summary_text}")
+        
         user_summaries[user_id] = summary_text
         await asyncio.to_thread(save_summaries)
         logging.info(f"✅ 用户 {user_id} 摘要完成")
@@ -796,13 +810,24 @@ async def summary(interaction: discord.Interaction):
     try:
         logging.info(f"正在为用户 {user_id} 手动生成摘要...")
         logging.info(f"摘要开始前的历史内容：{len(history)}")
+        
+        history_text = "\n".join([
+            f"User：{msg['content']}\n" if msg["role"] == "user" else f"Assistant：{msg['content']}\n"
+            for msg in history if msg["role"] in ["user", "assistant"]
+        ])
 
-        summary_prompt = [{
+        summary_prompt = [
+            {
             "role":
             "system",
             "content":
-            "请你总结所有用户和GPT之间从头到尾的历史对话content，以便在未来对话中作为 context 使用。\n\n"
-        }, *history]
+            "请你总结用户和GPT之间从头到尾的所有历史对话，用于后续对话的 context 使用。请使用第三人称、概括性语言，不要重复原话，不要加入评论或判断。重点总结用户的行为特征、情绪倾向、风格偏好和主要话题。\n"
+            },
+            {
+            "role": "user",
+            "content": f"以下是完整的对话历史：\n\n{history_text}"
+            }
+        ]
         
         logging.info(f"摘要内容：{summary_prompt}")
 
@@ -815,6 +840,9 @@ async def summary(interaction: discord.Interaction):
         )
 
         summary_text = summary_response.choices[0].message.content or ""
+        
+        logging.info(f"摘要成功：{summary_text}")
+        
         user_summaries[user_id] = summary_text
         await asyncio.to_thread(save_summaries)
         
