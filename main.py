@@ -233,6 +233,10 @@ async def on_ready():
         synced = await bot.tree.sync()
         
         logging.info(f"✅ Slash commands synced: {len(synced)} 个全局指令已注册")
+        
+        # 打印所有已注册的指令名称
+        command_names = [cmd.name for cmd in bot.tree.get_commands()]
+        logging.info(f"✅ 已注册的全局指令：{command_names}")
 
     except Exception as e:
         logging.error(e)
@@ -766,7 +770,7 @@ async def reset(interaction: discord.Interaction):
     
 
 # ============================== #
-# changestatus 指令（测试服务器可用）
+# changestatus 指令
 # ============================== #
 OWNER_ID = 666250534541328395
 
