@@ -808,7 +808,7 @@ def is_valid_url(url: str) -> bool:
     return isinstance(url, str) and url.startswith("http")
 
 CUTE_SUBREDDITS = [
-    "aww", "Eyebleach", "rarepuppers", "AnimalsBeingDerps", "AnimalsOnReddit", "Catmemes", "PartyParrot", "Ornithology", "Birding", "birdwatching", "parrots", "BirdsArentReal"
+    "aww", "Eyebleach", "rarepuppers", "AnimalsBeingDerps", "AnimalsOnReddit", "Catmemes", "PartyParrot", "Ornithology", "Birding", "birdwatching", "parrots", "BirdsArentReal", "Floof"
 ]
 
 # 用于下拉选项
