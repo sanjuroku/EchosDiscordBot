@@ -829,13 +829,13 @@ async def summary(interaction: discord.Interaction):
             }
         ]
         
-        logging.info(f"摘要内容：{summary_prompt}")
+        #logging.info(f"摘要内容：{summary_prompt}")
 
         summary_response = await gpt_call(
             model="gpt-4.1",
             messages=summary_prompt,
             temperature=0.3,
-            max_tokens=800,
+            max_tokens=500,
             timeout=60,
         )
 
@@ -864,7 +864,7 @@ async def summarycheck(interaction: discord.Interaction):
 
     if summary_text:
         await interaction.response.send_message(
-            f"📄 这是你的对话摘要：\n\n{summary_text}")
+            f"📄 这是你的对话摘要：\n\n{summary_text}", ephemeral=True)
     else:
         await interaction.response.send_message("ℹ️ 当前还没有摘要哦！", ephemeral=True)
 
