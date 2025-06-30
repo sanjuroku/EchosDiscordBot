@@ -258,7 +258,7 @@ async def on_ready():
         text = None
         activity = None
         
-        # 尝试加载上次保存的状态
+        # 加载上次保存的状态
         if os.path.exists("status_config.json"):
             with open("status_config.json", "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -276,8 +276,6 @@ async def on_ready():
             
         else:
             # 默认状态活动
-            #activity = discord.CustomActivity(name="发出了咋办的声音")
-            #await bot.change_presence(status=discord.Status.idle,activity=activity)
             status = discord.Status.idle
             text = "发出了咋办的声音"
             activity = discord.CustomActivity(name=text)
@@ -815,7 +813,7 @@ subreddit_choices = [
 ]
 
 @bot.tree.command(name="aww", description="从Reddit上随机抽一只可爱动物")
-@app_commands.describe(subreddit="可选：选择subreddit来源，不填则随机")
+@app_commands.describe(subreddit="选择subreddit来源，不填则随机")
 @app_commands.choices(subreddit=subreddit_choices)
 async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands.Choice[str]] = None):
     await interaction.response.defer()
@@ -1056,7 +1054,7 @@ async def help_command(interaction: discord.Interaction):
            "`/choose <选项1> <选项2> ...` - 让咋办帮忙选选\n"
            "`/tarot <困惑>` - 抽一张塔罗牌解读你的困惑\n"
            "`/fortune` - 占卜你的今日运势并解读\n"
-           "`/aww` - 从Reddit上随机抽一只可爱动物\n"
+           "`/aww <subreddit>` - 从Reddit上随机抽一只可爱动物\n"
            "`/steam <游戏名称> [地区]` - 查询 Steam 游戏信息\n"
            "`/timezone` - 显示当前时间与全球多个时区的对照\n\n"
            "`/setrole <风格设定>` - 设置专属的角色风格，或者希望bot记住的事情\n"
