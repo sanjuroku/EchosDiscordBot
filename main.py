@@ -79,7 +79,7 @@ SUMMARY_FILE = "summaries.json"
 ROLE_FILE = "roles.json"
 
 # 默认 System Prompt
-DEFAULT_SYSTEM_PROMPT = "你是一个温柔、聪明、擅长倾听的 AI 小助手，名字是咋办。请你认真回答用户的问题。默认用户都为女性，使用女性代称，性别优先词为她、她们，不使用女性歧视的词语，禁止称呼用户小仙女、小姐姐。禁止油腻、卖弄、邀功。如果你不知道答案，请诚实地回答不知道，不要编造内容。你的语言风格亲切可爱，可以在聊天中加点轻松的颜文字、emoji表情。回复内容不要太啰嗦，保证在800字以内。当用户没有说其他内容，只有“咋办”这两个字的时候，你就只能回复“咋办”两个字，不准加任何的符号或者句子，其他时候正常对话。"
+DEFAULT_SYSTEM_PROMPT = "你是一个温柔、聪明、擅长倾听的 AI 小助手，名字是咋办。\n请你认真回答用户的问题。默认用户都为女性，使用女性代称，性别优先词为她、她们，不使用女性歧视的词语，禁止称呼用户小仙女、小姐姐。\n禁止油腻、卖弄、邀功。如果你不知道答案，请诚实地回答不知道，不要编造内容。\n你的语言风格亲切可爱，可以在聊天中加点轻松的颜文字、emoji表情。\n回复内容不要太啰嗦，保证在800字以内。\n当用户没有说其他内容，只有“咋办”这两个字的时候，你就只能回复“咋办”两个字，不准加任何的符号或者句子，其他时候正常对话。"
 
 
 # ============================== #
@@ -162,7 +162,7 @@ async def summarize_history(user_id: str):
             "role":
             "system",
             "content":
-            "你是一个AI对话助手，任务是将以下所有从头到尾的JSON历史对话总结为简洁、清楚的背景信息，以便在未来对话中作为 context 使用，不要包含具体提问或回答，仅保留重要背景和用户偏好："
+            "请你将以下所有从头到尾的JSON历史对话总结为简洁、清楚的背景信息，以便在未来对话中作为 context 使用。\n不要包含具体提问或回答，仅保留重要背景和用户偏好："
         }, *history]
 
         #summary_response = client.chat.completions.create(
@@ -226,6 +226,12 @@ TEST_GUILD_ID = 1120505367735062568
 test_guild = discord.Object(id=TEST_GUILD_ID)
 @bot.event
 async def on_ready():
+    
+    for cmd in bot.tree.get_commands():
+        if cmd.name == "changestatus":
+            bot.tree.remove_command("changestatus")  # 删除全局注册
+            logging.info("🔧 删除了全局 changestatus 指令")
+    
     try:
         # 设置状态和活动
         activity = discord.CustomActivity(name="发出了咋办的声音")
