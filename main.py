@@ -224,6 +224,11 @@ def load_roles():
 async def on_ready():
     
     try:
+        # 设置状态和活动
+        activity = discord.CustomActivity(name="发出了咋办的声音")
+        await bot.change_presence(status=discord.Status.idle,
+                                  activity=activity)
+        
         # 同步全局命令
         synced = await bot.tree.sync()
         
