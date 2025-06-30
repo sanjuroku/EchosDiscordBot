@@ -785,6 +785,7 @@ async def steam(interaction: Interaction,
 # ============================== #
 @bot.tree.command(name="summary", description="总结以往对话生成摘要")
 async def summary(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=True)
     """为指定用户手动生成对话摘要"""
     user_id = str(interaction.user.id)
     history = user_histories.get(user_id, [])
@@ -815,7 +816,7 @@ async def summary(interaction: discord.Interaction):
         user_summaries[user_id] = summary_text
         await asyncio.to_thread(save_summaries)
         
-        await interaction.response.send_message("✅ 手动生成摘要成功！可以通过`/summarycheck`进行确认>.<")
+        await interaction.followup.send("✅ 手动生成摘要成功！可以通过`/summarycheck`进行确认>.<")
 
         logging.info(f"✅ 用户 {user_id} 手动摘要完成")
 
