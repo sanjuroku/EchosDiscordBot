@@ -126,6 +126,9 @@ def save_summaries():
     try:
         with open(SUMMARY_FILE, "w", encoding="utf-8") as f:
             json.dump(user_summaries, f, ensure_ascii=False, indent=2)
+            
+            logging.info(f"✅ 已保存摘要到 {SUMMARY_FILE}，共 {len(user_summaries)} 个用户")
+            
     except Exception as e:
         logging.error(f"❌ 保存摘要失败：{e}")
 
@@ -165,7 +168,6 @@ async def summarize_history(user_id: str):
             "请你将以下所有从头到尾的JSON历史对话总结为简洁、清楚的背景信息，以便在未来对话中作为 context 使用。\n不要包含具体提问或回答，仅保留重要背景和用户偏好："
         }, *history]
 
-        #summary_response = client.chat.completions.create(
         summary_response = await gpt_call(
             model="gpt-4.1",
             messages=summary_prompt,
@@ -187,7 +189,7 @@ async def summarize_history(user_id: str):
         logging.info(f"用户 {user_id} 的历史已清理，仅保留最近 {len(preserved)} 条对话")
 
     except Exception as e:
-        logging.warning(f"⚠️ 为用户 {user_id} 生成摘要失败：", e)
+        logging.warning(f"⚠️ 为用户 {user_id} 生成摘要失败：{e}")
 
 
 # ============================== #
@@ -369,7 +371,7 @@ async def ask(interaction: discord.Interaction, prompt: str):
 
         except Exception as e:
             logging.error(f"❌ GPT调用出错：{e}")
-            await interaction.followup.send(f"❌ 出错了：{str(e)}")
+            await interaction.followup.send(f"❌ 出错了：{str(e)}", ephemeral=True)
 
 
 # ============================== #
@@ -382,7 +384,7 @@ async def choose(interaction: discord.Interaction, options: str):
     # 分割用户输入的字符串
     choices = options.strip().split()
     if len(choices) < 2:
-        await interaction.followup.send("ℹ️ 请至少提供两个选项，例如：`/choose A B C`")
+        await interaction.followup.send("ℹ️ 请至少提供两个选项，例如：`/choose A B C`", ephemeral=True)
         return
 
     # 随机选择
@@ -404,7 +406,7 @@ async def setrole(interaction: discord.Interaction, prompt: str):
     save_roles()
     await interaction.response.send_message("✅ 角色设定保存了喵！")
     
-    logging.info(f"用户 {user_id} 设定了角色风格:{prompt}")
+    logging.info(f"✅ 用户 {user_id} 设定了角色风格:{prompt}")
 
 
 # ============================== #
@@ -415,9 +417,9 @@ async def rolecheck(interaction: discord.Interaction):
     user_id = str(interaction.user.id)
     prompt = user_roles.get(user_id)
     if prompt:
-        await interaction.response.send_message(f"📝 你的当前角色设定是：\n\n{prompt}")
+        await interaction.response.send_message(f"📝 你的当前角色设定是：\n\n{prompt}", ephemeral=True)
     else:
-        await interaction.response.send_message("ℹ️ 你还没有设置自定义角色设定，正在使用默认设定喵～")
+        await interaction.response.send_message("ℹ️ 你还没有设置自定义角色设定。可以通过`/setrole`进行角色设置捏！", ephemeral=True)
 
 
 # ============================== #
@@ -429,12 +431,12 @@ async def resetrole(interaction: discord.Interaction):
     if user_id in user_roles:
         user_roles.pop(user_id)
         save_roles()
-        await interaction.response.send_message("✅ 已清除你的自定义角色设定，恢复默认风格喵！")
+        await interaction.response.send_message("✅ 已清除你的自定义角色设定，恢复默认风格喵！", ephemeral=True)
         
-        logging.info(f"用户 {user_id} 清除了自定义角色设定")
+        logging.info(f"✅ 用户 {user_id} 清除了自定义角色设定")
         
     else:
-        await interaction.response.send_message("ℹ️ 你还没有设置过角色风格哦，当前使用的就是默认设定～")
+        await interaction.response.send_message("ℹ️ 你还没有设置过角色风格哦，当前使用的就是默认设定。可以通过`/setrole`进行角色设置捏！", ephemeral=True)
 
 
 # ============================== #
@@ -498,7 +500,7 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
         logging.info(f"抽取的塔罗牌: {card_name}({position})")
 
     except Exception as e:
-        await interaction.followup.send(f"❌ 出错了：{str(e)}")
+        await interaction.followup.send(f"❌ 出错了：{str(e)}", ephemeral=True)
 
 
 # ============================== #
@@ -543,7 +545,7 @@ async def fortune(interaction: discord.Interaction):
         logging.info(f"抽取的塔罗牌: {card_name}({position})")
         
     except Exception as e:
-        await interaction.followup.send(f"❌ 出错了：{str(e)}")
+        await interaction.followup.send(f"❌ 出错了：{str(e)}", ephemeral=True)
 
 
 # ============================== #
@@ -681,7 +683,7 @@ async def steam(interaction: Interaction,
     # 1. GPT 标准化游戏名
     names = await get_standard_names_by_gpt(game_name)
     if not names:
-        await interaction.followup.send("❌ 未能标准化游戏名，请检查输入。")
+        await interaction.followup.send("❌ 未能标准化游戏名，请检查输入。", ephemeral=True)
         return
     zh_name, en_name = names
 
@@ -699,7 +701,7 @@ async def steam(interaction: Interaction,
                 break
 
         if not app_id:
-            await interaction.followup.send("❌ Steam商店未找到匹配的游戏，请检查输入。")
+            await interaction.followup.send("❌ Steam商店未找到匹配的游戏，请检查输入。", ephemeral=True)
             return
 
         # 3. 获取游戏详情，默认cn和us
@@ -778,11 +780,53 @@ async def steam(interaction: Interaction,
 
     await interaction.followup.send(embed=embed)
 
+# ============================== #
+# summary 指令
+# ============================== #
+@bot.tree.command(name="summary", description="总结以往对话生成摘要")
+async def summary(interaction: discord.Interaction):
+    """为指定用户手动生成对话摘要"""
+    user_id = str(interaction.user.id)
+    history = user_histories.get(user_id, [])
+    if not history:
+        await interaction.response.send_message("ℹ️ 还没有任何历史记录哦，无法生成摘要>.<", ephemeral=True)
+        return
+
+    try:
+        logging.info(f"正在为用户 {user_id} 手动生成摘要...")
+        logging.info(f"摘要开始前的历史内容：{len(history)}")
+
+        summary_prompt = [{
+            "role":
+            "system",
+            "content":
+            "请你将以下所有从头到尾的JSON历史对话总结为简洁、清楚的背景信息，以便在未来对话中作为 context 使用。\n不要包含具体提问或回答，仅保留重要背景和用户偏好："
+        }, *history]
+
+        summary_response = await gpt_call(
+            model="gpt-4.1",
+            messages=summary_prompt,
+            temperature=0.3,
+            max_tokens=800,
+            timeout=60,
+        )
+
+        summary_text = summary_response.choices[0].message.content or ""
+        user_summaries[user_id] = summary_text
+        await asyncio.to_thread(save_summaries)
+        
+        await interaction.response.send_message("✅ 手动生成摘要成功！可以通过`/summarycheck`进行确认>.<")
+
+        logging.info(f"✅ 用户 {user_id} 手动摘要完成")
+
+    except Exception as e:
+        await interaction.followup.send("⚠️ 生成摘要失败TT，请稍后重试。", ephemeral=True)
+        logging.warning(f"⚠️ 为用户 {user_id} 手动生成摘要失败：{e}")
 
 # ============================== #
 # summarycheck 指令
 # ============================== #
-@bot.tree.command(name="summarycheck", description="查看你的对话摘要（超过100条才有）")
+@bot.tree.command(name="summarycheck", description="查看你的对话摘要")
 async def summarycheck(interaction: discord.Interaction):
     user_id = str(interaction.user.id)
     summary_text = user_summaries.get(user_id)
@@ -791,7 +835,7 @@ async def summarycheck(interaction: discord.Interaction):
         await interaction.response.send_message(
             f"📄 这是你的对话摘要：\n\n{summary_text}")
     else:
-        await interaction.response.send_message("ℹ️ 当前还没有摘要哦！")
+        await interaction.response.send_message("ℹ️ 当前还没有摘要哦！", ephemeral=True)
 
 
 # ============================== #
@@ -806,9 +850,9 @@ async def reset(interaction: discord.Interaction):
     save_histories()
     save_summaries()
     save_roles()
-    await interaction.response.send_message("✅ 你的历史已清空～可以开始新的提问啦！")
+    await interaction.response.send_message("✅ 你的历史已清空～可以开始新的提问啦！", ephemeral=True)
     
-    logging.info(f"用户 {user_id} 重置清空了所有历史")
+    logging.info(f"✅ 用户 {user_id} 重置清空了所有历史")
     
 
 # ============================== #
@@ -842,7 +886,7 @@ async def change_status(
 
     # 权限检查
     if interaction.user.id != OWNER_ID:
-        await interaction.response.send_message("❌ 你没有权限使用这个命令。", ephemeral=True)
+        await interaction.response.send_message("ℹ️ 你没有权限使用这个命令哦 :3c", ephemeral=True)
         return
 
     try:
@@ -886,9 +930,11 @@ async def help_command(interaction: discord.Interaction):
            "`/setrole <风格设定>` - 设置专属的角色风格，或者希望bot记住的事情\n"
            "`/rolecheck` - 查看你的角色设定\n"
            "`/resetrole` - 清除你的角色设定，恢复默认风格\n"
-           "`/summarycheck` - 查看你的对话摘要（超过100条才有）\n"
+           "`/summary` - 总结以往对话生成摘要\n"
+           "`/summarycheck` - 查看你的对话摘要\n"
            "`/reset` - 重置清空所有历史\n"
-           "`/help` - 列出所有可用指令\n")
+           "`/help` - 列出所有可用指令\n\n"
+           "💬 有问题可以 @kuroniko0707 捏（没问题也可以）")
     await interaction.response.send_message(msg)
 
 
