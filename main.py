@@ -806,7 +806,7 @@ async def get_reddit():
     )
 
 CUTE_SUBREDDITS = [
-    "aww", "Eyebleach", "rarepuppers", "AnimalsBeingDerps", "AnimalsOnReddit", "Catmemes"
+    "aww", "Eyebleach", "rarepuppers", "AnimalsBeingDerps", "AnimalsOnReddit", "Catmemes", "PartyParrot", "Ornithology", "Birding"
 ]
 @bot.tree.command(name="aww", description="从Reddit上随机抽一只可爱动物")
 async def aww(interaction: discord.Interaction):
