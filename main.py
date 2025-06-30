@@ -803,6 +803,10 @@ async def get_reddit():
         user_agent=os.environ.get("REDDIT_USER_AGENT"),
     )
 
+# 检验URL是否有效
+def is_valid_url(url: str) -> bool:
+    return isinstance(url, str) and url.startswith("http")
+
 CUTE_SUBREDDITS = [
     "aww", "Eyebleach", "rarepuppers", "AnimalsBeingDerps", "AnimalsOnReddit", "Catmemes", "PartyParrot", "Ornithology", "Birding", "birdwatching", "parrots", "BirdsArentReal"
 ]
@@ -863,13 +867,15 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
     
     # 如果是图片或 gif
     if selected_post.url.endswith((".jpg", ".jpeg", ".png", ".gif")):
-        embed.set_image(url=selected_post.url)
+        if is_valid_url(selected_post.url):
+            embed.set_image(url=selected_post.url)
         logging.info(f"🐾 图片链接：{selected_post.url}")
 
     # 如果是 Reddit 原生视频
     elif (selected_post.is_video and selected_post.media and isinstance(selected_post.media, dict) and "reddit_video" in selected_post.media):
         thumbnail_url = selected_post.thumbnail  # 获取缩略图
-        embed.set_image(url=thumbnail_url)
+        if is_valid_url(thumbnail_url):
+            embed.set_image(url=thumbnail_url)
         video_url = selected_post.media["reddit_video"]["fallback_url"]
         embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({video_url})" + "\n⚠️ 注意：有些 Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
         logging.info(f"🐾 视频链接：{video_url}")
@@ -877,13 +883,15 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
     # 如果是 mp4/webm
     elif selected_post.url.endswith((".mp4", ".webm")):
         thumbnail_url = selected_post.thumbnail  # 获取缩略图
-        embed.set_image(url=thumbnail_url)
+        if is_valid_url(thumbnail_url):
+            embed.set_image(url=thumbnail_url)
         embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({selected_post.url})" + "\n⚠️ 注意：有些 Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
         logging.info(f"🐾 mp4/webm链接：{selected_post.url}")
     
     elif selected_post.url.endswith(".gifv"):
         thumbnail_url = selected_post.thumbnail  # 获取缩略图
-        embed.set_image(url=thumbnail_url)
+        if is_valid_url(thumbnail_url):
+            embed.set_image(url=thumbnail_url)
         mp4_url = selected_post.url.replace(".gifv", ".mp4")
         embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({mp4_url})" + "\n⚠️ 注意：有些 Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
         logging.info(f"🐾 gifv转mp4链接：{mp4_url}")
