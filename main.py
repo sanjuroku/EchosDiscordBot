@@ -238,14 +238,9 @@ activity_map = {
 async def on_ready():
     
     try:
-        # 默认状态活动
-        #activity = discord.CustomActivity(name="发出了咋办的声音")
-        #await bot.change_presence(status=discord.Status.idle,activity=activity)
-        status = discord.Status.idle
-        text = "发出了咋办的声音"
-        activity = discord.CustomActivity(name=text)
-        
-        logging.info(f"✅ 已设置默认状态：{status} - {text}") 
+        activity_type = None
+        text = None
+        activity = None
         
         # 尝试加载上次保存的状态
         if os.path.exists("status_config.json"):
@@ -262,7 +257,17 @@ async def on_ready():
                     activity = activity_func(text)
             
             logging.info(f"✅ 已恢复上次状态：{status} - {activity_type} {text}") 
-        
+            
+        else:
+            # 默认状态活动
+            #activity = discord.CustomActivity(name="发出了咋办的声音")
+            #await bot.change_presence(status=discord.Status.idle,activity=activity)
+            status = discord.Status.idle
+            text = "发出了咋办的声音"
+            activity = discord.CustomActivity(name=text)
+            
+            logging.info(f"✅ 已设置默认状态：{status} - {text}") 
+            
         # 设置状态
         await bot.change_presence(status=status, activity=activity)
         
