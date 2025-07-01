@@ -1116,7 +1116,7 @@ async def buymeacoffee(interaction: discord.Interaction):
     embed.set_image(url="https://storage.ko-fi.com/cdn/kofi1.png?v=3") 
     embed.set_footer(text="🌈 咋办 bot 目前由一人开发，运行在 VPS 服务器上。\n🌈 相关指令使用的都是 GPT-4.1 模型。\n✨ 谢谢你喜欢咋办 >.< 有任何建议或反馈，也欢迎随时告诉我！\n💌 DM @kuroniko0707")
 
-    await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 # ============================== #
 # help 指令
