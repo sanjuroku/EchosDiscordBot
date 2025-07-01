@@ -441,7 +441,7 @@ async def setrole(interaction: discord.Interaction, prompt: str):
     user_id = str(interaction.user.id)
     user_roles[user_id] = prompt
     save_roles()
-    await interaction.response.send_message("✅ 角色设定保存了喵！")
+    await interaction.response.send_message("✅ 角色设定保存了喵！", ephemeral=True)
     
     logging.info(f"✅ 用户 {user_id} 设定了角色风格:{prompt}")
 
@@ -978,7 +978,7 @@ async def summary(interaction: discord.Interaction):
         user_summaries[user_id] = summary_text
         await asyncio.to_thread(save_summaries)
         
-        await interaction.followup.send("✅ 手动生成摘要成功！可以通过`/summarycheck`进行确认>.<")
+        await interaction.followup.send("✅ 手动生成摘要成功！可以通过`/summarycheck`进行确认>.<", ephemeral=True)
 
         logging.info(f"✅ 用户 {user_id} 手动摘要完成")
 
