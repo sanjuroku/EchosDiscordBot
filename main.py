@@ -1093,12 +1093,12 @@ async def trigger_control(interaction: discord.Interaction, mode: app_commands.C
     if mode.value == "off":
         disabled_triggers.add(user_id)
         save_triggers_off()
-        await interaction.response.send_message("✅ 已关闭自动触发 ‘咋办’ ～", ephemeral=True)
+        await interaction.response.send_message("✅ 已关闭自动触发`咋办` >.<", ephemeral=True)
     else:
         if user_id in disabled_triggers:
             disabled_triggers.remove(user_id)
             save_triggers_off()
-        await interaction.response.send_message("✅ 已开启自动触发 ‘咋办’ ！", ephemeral=True)
+        await interaction.response.send_message("✅ 已开启自动触发`咋办` >.<", ephemeral=True)
     
     logging.info(f"🛠 用户 {user_id} 设置触发状态为 {mode.value}")
 
@@ -1114,7 +1114,7 @@ async def buymeacoffee(interaction: discord.Interaction):
         color=0xfefefe
     )
     embed.set_image(url="https://storage.ko-fi.com/cdn/kofi1.png?v=3") 
-    embed.set_footer(text="🌈 咋办 bot 目前由一人开发，运行在 VPS 云服务器上。\n🌈 相关指令使用的都是 GPT-4.1 模型。\n✨ 谢谢你喜欢咋办 >.< 有任何建议或反馈，也欢迎随时告诉我！\n💌 DM @kuroniko0707")
+    embed.set_footer(text="🌈 咋办 bot 目前由一人开发，运行在 VPS 服务器上。\n🌈 相关指令使用的都是 GPT-4.1 模型。\n✨ 谢谢你喜欢咋办 >.< 有任何建议或反馈，也欢迎随时告诉我！\n💌 DM @kuroniko0707")
 
     await interaction.response.send_message(embed=embed)
 
