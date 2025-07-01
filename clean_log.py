@@ -49,4 +49,4 @@ while i < len(lines):
 with open(log_path, "w", encoding="utf-8") as f:
     f.writelines(retained_lines)
 
-print("✅ bot.log 清理完成：保留了近 3 天和 WARNING 以上等级日志")
+print(f"✅ [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] bot.log 清理完成：保留了近 3 天和 WARNING 以上等级日志")
