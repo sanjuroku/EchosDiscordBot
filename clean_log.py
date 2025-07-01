@@ -13,6 +13,7 @@ log_line_pattern = re.compile(
 )
 
 retained_lines = []
+keep = False  # 标记当前行是否在保留段中（用于多行情况）
 
 with open(log_path, "r", encoding="utf-8") as f:
     for line in f:
@@ -23,12 +24,17 @@ with open(log_path, "r", encoding="utf-8") as f:
 
             if log_date >= cutoff_date:
                 retained_lines.append(line)  # 保留近三天的所有日志
+                keep = True  # 开启保留段（近三天）
             elif level not in low_levels:
                 retained_lines.append(line)  # 保留高等级日志（WARNING以上）
-            # 否则：旧+低等级 → 不保留
+                keep = True  # 保留高等级
+            else:
+                keep = False  # 不保留
         else:
-            # 非标准格式行，例如异常堆栈，保留
-            retained_lines.append(line)
+            if keep:
+                # 属于上面那行的延续（如异常堆栈、print输出），继续保留
+                retained_lines.append(line)
+            # 否则：孤立的旧内容，忽略
 
 # 写回精简后的日志
 with open(log_path, "w", encoding="utf-8") as f:
