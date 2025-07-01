@@ -1082,7 +1082,7 @@ async def change_status(
 # trigger 指令
 # ============================== #
 @bot.tree.command(name="trigger", description="开启或关闭你的发言自动触发'咋办'")
-@app_commands.describe(mode="开启或关闭自动触发咋办（on/off）")
+@app_commands.describe(mode="开启或关闭你的发言自动触发咋办（on/off）")
 @app_commands.choices(mode=[
     app_commands.Choice(name="开启 / on", value="on"),
     app_commands.Choice(name="关闭 / off", value="off")
@@ -1093,12 +1093,12 @@ async def trigger_control(interaction: discord.Interaction, mode: app_commands.C
     if mode.value == "off":
         disabled_triggers.add(user_id)
         save_triggers_off()
-        await interaction.response.send_message("✅ 已关闭自动触发`咋办` >.<", ephemeral=True)
+        await interaction.response.send_message("😶 已关闭自动触发`咋办` >.<", ephemeral=True)
     else:
         if user_id in disabled_triggers:
             disabled_triggers.remove(user_id)
             save_triggers_off()
-        await interaction.response.send_message("✅ 已开启自动触发`咋办` >.<", ephemeral=True)
+        await interaction.response.send_message("😮 已开启自动触发`咋办` >.<", ephemeral=True)
     
     logging.info(f"🛠 用户 {user_id} 设置触发状态为 {mode.value}")
 
@@ -1124,23 +1124,23 @@ async def buymeacoffee(interaction: discord.Interaction):
 @bot.tree.command(name="help", description="列出所有可用指令")
 async def help_command(interaction: discord.Interaction):
     msg = ("可用指令列表：\n"
-           "`/ask <问题>` - 咋办\n"
-           "`/choose <选项1> <选项2> ...` - 让咋办帮忙选选\n"
-           "`/tarot <困惑>` - 抽一张塔罗牌解读你的困惑\n"
-           "`/fortune` - 占卜你的今日运势并解读\n"
-           "`/aww <subreddit>` - 从Reddit上随机抽一只可爱动物\n"
-           "`/steam <游戏名称> [地区]` - 查询 Steam 游戏信息\n"
-           "`/timezone` - 显示当前时间与全球多个时区的对照\n\n"
-           "`/setrole <风格设定>` - 设置专属的角色风格，或者希望bot记住的事情\n"
-           "`/rolecheck` - 查看你的角色设定\n"
-           "`/resetrole` - 清除你的角色设定，恢复默认风格\n"
-           "`/summary` - 总结以往对话生成摘要\n"
-           "`/summarycheck` - 查看你的对话摘要\n"
-           "`/trigger <on/off>` - 开启或关闭你的发言自动触发'咋办'\n"
-           "`/reset` - 重置清空所有历史\n\n"
-           "`/help` - 列出所有可用指令\n"
-           "`/buymeacoffee` - 如果你喜欢咋办，可以请作者喝杯咖啡哦 :3c\n"
-           "💬 有问题可以 @kuroniko0707 捏（没问题也可以）")
+           "💬 `/ask <问题>` - 咋办\n"
+           "💭 `/choose <选项1> <选项2> ...` - 让咋办帮忙选选\n"
+           "🔮 `/tarot <困惑>` - 抽一张塔罗牌解读你的困惑\n"
+           "🧙‍♀️ `/fortune` - 占卜你的今日运势并解读\n"
+           "🐾 `/aww <subreddit>` - 从Reddit上随机抽一只可爱动物\n"
+           "🎮 `/steam <游戏名称> [地区]` - 查询 Steam 游戏信息\n"
+           "🕒 `/timezone` - 显示当前时间与全球多个时区的对照\n\n"
+           "🙋‍♀️ `/setrole <风格设定>` - 设置专属的角色风格，或者希望bot记住的事情\n"
+           "🙋‍♀️ `/rolecheck` - 查看你的角色设定\n"
+           "🙋‍♀️ `/resetrole` - 清除你的角色设定，恢复默认风格\n"
+           "📝 `/summary` - 总结以往对话生成摘要\n"
+           "📝 `/summarycheck` - 查看你的对话摘要\n"
+           "😶 `/trigger <on/off>` - 开启或关闭你的发言自动触发'咋办'\n"
+           "🧹 `/reset` - 重置清空所有历史\n\n"
+           "🐣 `/help` - 列出所有可用指令\n"
+           "🌈 `/buymeacoffee` - 如果你喜欢咋办，可以请作者喝杯咖啡哦 ☕️ :3c\n"
+           "💌 有问题可以 @kuroniko0707 捏（没问题也可以）")
     await interaction.response.send_message(msg)
 
 
