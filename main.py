@@ -1109,7 +1109,7 @@ async def trigger_control(interaction: discord.Interaction, mode: app_commands.C
 async def buymeacoffee(interaction: discord.Interaction):
     embed = discord.Embed(
         title="☕️ Buy Me A Coffee ☕️ 请我喝杯咖啡吧 :3c",
-        description="如果你喜欢 **咋办 bot** 或者被逗笑了一点点，\n可以点击标题通过 ko-fi 请我喝杯咖啡捏！☕️",
+        description="如果你喜欢 咋办 bot 或者被逗笑了一点点，\n可以点击标题通过 ko-fi 请我喝杯咖啡捏！☕️",
         url="https://ko-fi.com/kuroniko07",
         color=0xfefefe
     )
