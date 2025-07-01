@@ -13,28 +13,37 @@ log_line_pattern = re.compile(
 )
 
 retained_lines = []
-keep = False  # 标记当前行是否在保留段中（用于多行情况）
-
 with open(log_path, "r", encoding="utf-8") as f:
-    for line in f:
-        match = log_line_pattern.match(line)
-        if match:
-            log_date = datetime.strptime(match.group("date"), "%Y-%m-%d")
-            level = match.group("level")
+    lines = f.readlines()
 
-            if log_date >= cutoff_date:
-                retained_lines.append(line)  # 保留近三天的所有日志
-                keep = True  # 开启保留段（近三天）
-            elif level not in low_levels:
-                retained_lines.append(line)  # 保留高等级日志（WARNING以上）
-                keep = True  # 保留高等级
-            else:
-                keep = False  # 不保留
-        else:
-            if keep:
-                # 属于上面那行的延续（如异常堆栈、print输出），继续保留
-                retained_lines.append(line)
-            # 否则：孤立的旧内容，忽略
+i = 0
+while i < len(lines):
+    line = lines[i]
+    match = log_line_pattern.match(line)
+
+    if match:
+        # 是一个段落的开始
+        log_date = datetime.strptime(match.group("date"), "%Y-%m-%d")
+        level = match.group("level")
+
+        # 收集整段
+        paragraph = [line]
+        i += 1
+        while i < len(lines) and not log_line_pattern.match(lines[i]):
+            paragraph.append(lines[i])
+            i += 1
+
+        # 决定是否保留整段
+        if log_date >= cutoff_date:
+            retained_lines.extend(paragraph)  # 保留近三天的全部段落
+        elif level not in low_levels:
+            retained_lines.extend(paragraph)  # 保留旧但重要的（WARNING+）
+        # 否则跳过整段（老的 INFO/DEBUG + 附属输出）
+
+    else:
+        # 没有起始时间戳的“悬浮行”保留
+        retained_lines.append(line)
+        i += 1
 
 # 写回精简后的日志
 with open(log_path, "w", encoding="utf-8") as f:
