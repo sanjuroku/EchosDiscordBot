@@ -302,13 +302,38 @@ async def on_ready():
 # ============================== #
 # 聊天记录中trigger咋办
 # ============================== #
+TRIGGER_FILE = "disabled_triggers.json"
+disabled_triggers: set[str] = set()
+
+# 加载triggers设置的函数
+def load_triggers_off():
+    global disabled_triggers
+    if os.path.exists(TRIGGER_FILE):
+        try:
+            with open(TRIGGER_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                disabled_triggers = set(data)
+                logging.info(f"✅ 已加载triggers_off设置，共 {len(disabled_triggers)} 个用户")
+        except Exception as e:
+            logging.warning(f"⚠️ 加载triggers_off设置失败：{e}")
+            disabled_triggers = set()
+            
+# 保存triggers_off设置的函数
+def save_triggers_off():
+    try:
+        with open(TRIGGER_FILE, "w", encoding="utf-8") as f:
+            json.dump(list(disabled_triggers), f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logging.error(f"❌ 保存triggers_off设置失败：{e}")
+        
 @bot.event
 async def on_message(message):
     # 避免 bot 自己触发自己
     if message.author.bot:
         return
 
-    if "咋办" in message.content:
+    user_id = str(message.author.id)
+    if "咋办" in message.content and user_id not in disabled_triggers: # 跳过triggers_off用户
         await message.channel.send("咋办")
 
     # 为了确保其他指令还能运行
@@ -877,7 +902,7 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
         if is_valid_url(thumbnail_url):
             embed.set_image(url=thumbnail_url)
         video_url = selected_post.media["reddit_video"]["fallback_url"]
-        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({video_url})" + "\n⚠️ 注意：有些 Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
+        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({video_url})" + "\n注意：有些 Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
         logging.info(f"🐾 视频链接：{video_url}")
 
     # 如果是 mp4/webm
@@ -885,7 +910,7 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
         thumbnail_url = selected_post.thumbnail  # 获取缩略图
         if is_valid_url(thumbnail_url):
             embed.set_image(url=thumbnail_url)
-        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({selected_post.url})" + "\n⚠️ 注意：有些 Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
+        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({selected_post.url})" + "\n注意：有些 Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
         logging.info(f"🐾 mp4/webm链接：{selected_post.url}")
     
     elif selected_post.url.endswith(".gifv"):
@@ -893,7 +918,7 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
         if is_valid_url(thumbnail_url):
             embed.set_image(url=thumbnail_url)
         mp4_url = selected_post.url.replace(".gifv", ".mp4")
-        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({mp4_url})" + "\n⚠️ 注意：有些 Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
+        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({mp4_url})" + "\n注意：有些 Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
         logging.info(f"🐾 gifv转mp4链接：{mp4_url}")
 
     logging.info(f"🐾 随机抽取了 r/{subreddit_name} 的帖子：{title} ")
@@ -1054,6 +1079,46 @@ async def change_status(
 
 
 # ============================== #
+# trigger 指令
+# ============================== #
+@bot.tree.command(name="trigger", description="开启或关闭你的发言自动触发'咋办'")
+@app_commands.describe(mode="开启或关闭自动触发咋办（on/off）")
+@app_commands.choices(mode=[
+    app_commands.Choice(name="开启 / on", value="on"),
+    app_commands.Choice(name="关闭 / off", value="off")
+])
+async def trigger_control(interaction: discord.Interaction, mode: app_commands.Choice[str]):
+    user_id = str(interaction.user.id)
+    
+    if mode.value == "off":
+        disabled_triggers.add(user_id)
+        save_triggers_off()
+        await interaction.response.send_message("✅ 已关闭自动触发 ‘咋办’ ～", ephemeral=True)
+    else:
+        if user_id in disabled_triggers:
+            disabled_triggers.remove(user_id)
+            save_triggers_off()
+        await interaction.response.send_message("✅ 已开启自动触发 ‘咋办’ ！", ephemeral=True)
+    
+    logging.info(f"🛠 用户 {user_id} 设置触发状态为 {mode.value}")
+
+# ============================== #
+# buymeacoffee 指令
+# ============================== #
+@bot.tree.command(name="buymeacoffee", description="喜欢我可以请作者喝杯咖啡哦 :3c")
+async def buymeacoffee(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="☕️ Buy Me A Coffee ☕️ 请我喝杯咖啡吧 :3c",
+        description="如果你喜欢 **咋办 bot** 或者被逗笑了一点点，可以通过 Ko-fi 请我喝杯咖啡捏！☕️🌈",
+        url="https://ko-fi.com/kuroniko07",
+        color=0xfefefe
+    )
+    embed.set_image(url="https://storage.ko-fi.com/cdn/kofi1.png?v=3") 
+    embed.set_footer(text="咋办bot 目前由一人开发，运行在 VPS 云服务器上。\n相关指令使用的都是 GPT-4.1 模型。\n✨ 谢谢你喜欢咋办 >.< 有任何建议或反馈，也欢迎随时告诉我！💌 DM @kuroniko0707")
+
+    await interaction.response.send_message(embed=embed)
+
+# ============================== #
 # help 指令
 # ============================== #
 @bot.tree.command(name="help", description="列出所有可用指令")
@@ -1071,8 +1136,10 @@ async def help_command(interaction: discord.Interaction):
            "`/resetrole` - 清除你的角色设定，恢复默认风格\n"
            "`/summary` - 总结以往对话生成摘要\n"
            "`/summarycheck` - 查看你的对话摘要\n"
-           "`/reset` - 重置清空所有历史\n"
-           "`/help` - 列出所有可用指令\n\n"
+           "`/trigger <on/off>` - 开启或关闭你的发言自动触发'咋办'\n"
+           "`/reset` - 重置清空所有历史\n\n"
+           "`/help` - 列出所有可用指令\n"
+           "`/buymeacoffee` - 如果你喜欢咋办，可以请作者喝杯咖啡哦 :3c\n"
            "💬 有问题可以 @kuroniko0707 捏（没问题也可以）")
     await interaction.response.send_message(msg)
 
@@ -1083,4 +1150,5 @@ async def help_command(interaction: discord.Interaction):
 load_histories()
 load_summaries()
 load_roles()
+load_triggers_off()
 bot.run(TOKEN)
