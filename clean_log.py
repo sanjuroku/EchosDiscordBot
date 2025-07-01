@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import re
 
-log_path = "/bot-env/EchosDiscordBot/bot.log" 
+log_path = "/root/bot-env/EchosDiscordBot/bot.log" 
 cutoff_date = datetime.now() - timedelta(days=3)
 
 # 定义低等级日志（需要清理的等级）
