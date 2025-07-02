@@ -1072,12 +1072,19 @@ async def summarycheck(interaction: discord.Interaction):
 @bot.tree.command(name="reset", description="重置清空所有历史")
 async def reset(interaction: discord.Interaction):
     user_id = str(interaction.user.id)
-    user_histories.pop(user_id, None)
-    user_summaries.pop(user_id, None)
-    user_roles.pop(user_id, None)
-    save_histories()
-    save_summaries()
-    save_roles()
+    
+    #user_histories.pop(user_id, None)
+    #user_summaries.pop(user_id, None)
+    #user_roles.pop(user_id, None)
+    #save_histories()
+    #save_summaries()
+    #save_roles()
+    
+    # 用StorageManager
+    history_storage.delete(user_id)
+    summary_storage.delete(user_id)
+    role_storage.delete(user_id)
+    
     await interaction.response.send_message("✅ 你的历史已清空～可以开始新的提问啦！", ephemeral=True)
     
     logging.info(f"✅ 用户 {user_id} 重置清空了所有历史")
