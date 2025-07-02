@@ -312,7 +312,7 @@ async def on_ready():
 # 加入新服务器触发日志提醒
 @bot.event
 async def on_guild_join(guild):
-    log_channel = bot.get_channel(1120505367735062568) 
+    log_channel = bot.get_channel(1120505368531976244) 
     if log_channel:
         if isinstance(log_channel, discord.TextChannel) or isinstance(log_channel, discord.Thread):
             await log_channel.send(
