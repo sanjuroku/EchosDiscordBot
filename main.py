@@ -967,7 +967,7 @@ async def summary(interaction: discord.Interaction):
             model="gpt-4.1",
             messages=summary_prompt,
             temperature=0.3,
-            max_tokens=500,
+            max_tokens=1000,
             timeout=60,
         )
 
