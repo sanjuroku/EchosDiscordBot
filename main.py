@@ -279,7 +279,8 @@ async def on_ready():
     logging.info(f"✅ 已注册的全局指令：{command_names}")
     
     logging.info(f"✅ 已登录为 {bot.user}")
-    logging.info(f"📋 当前加入了 {len(bot.guilds)} 个服务器")
+    guild_names = [guild.name for guild in bot.guilds]
+    logging.info(f"📋 当前加入了 {len(bot.guilds)} 个服务器：{', '.join(guild_names)}")
 
 # 加入新服务器触发日志提醒
 def update_guilds_json():
