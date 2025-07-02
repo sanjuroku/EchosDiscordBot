@@ -21,6 +21,8 @@ from storage import DictStorageManager, ListStorageManager
 import aiohttp
 import re
 
+print(discord.__version__)
+
 #写入日志
 logging.basicConfig(
     level=logging.INFO,
@@ -277,7 +279,7 @@ async def on_ready():
     logging.info(f"✅ 已注册的全局指令：{command_names}")
     
     logging.info(f"✅ 已登录为 {bot.user}")
-    logging.info(f"📋 当前加入了 {len(bot.guilds)} 个服务器：")
+    logging.info(f"📋 当前加入了 {len(bot.guilds)} 个服务器")
 
 # 加入新服务器触发日志提醒
 def update_guilds_json():
@@ -320,7 +322,7 @@ async def on_guild_join(guild):
         return
 
     try:
-        owner = await guild.fetch_owner()
+        owner = await bot.fetch_user(guild.owner_id)
     except Exception as e:
         owner = f"未知（获取失败: {e}）"
 
@@ -333,7 +335,7 @@ async def on_guild_join(guild):
 
     await log_channel.send(message)
 
-    logging.info(f"✅ Bot 加入新服务器：**{guild.name}**（ID: {guild.id}）")
+    logging.info(f"✅ Bot 加入新服务器：{guild.name}（ID: {guild.id}）")
     logging.info(f"👥 拥有者：{owner}（ID: {guild.owner_id}）")
     logging.info(f"👥 成员数：{guild.member_count}")
     logging.info(f"🕒 加入时间：{joined_time}")
@@ -353,7 +355,7 @@ async def on_guild_remove(guild):
         return
 
     try:
-        owner = await guild.fetch_owner()
+        owner = await bot.fetch_user(guild.owner_id)
     except Exception as e:
         owner = f"未知（获取失败: {e}）"
     
@@ -366,7 +368,7 @@ async def on_guild_remove(guild):
 
     await log_channel.send(message)
 
-    logging.info(f"❌ Bot 被移除了服务器：**{guild.name}**（ID: {guild.id}）")
+    logging.info(f"❌ Bot 被移除了服务器：{guild.name}（ID: {guild.id}）")
     logging.info(f"👥 拥有者：{owner}（ID: {guild.owner_id}）")
     logging.info(f"👥 成员数：{guild.member_count}")
     logging.info(f"🕒 移除时间：{removed_time}")
