@@ -319,6 +319,8 @@ async def on_guild_join(guild):
             f"✅ Bot 加入了新服务器：**{guild.name}**（ID: `{guild.id}`）\n"
             f"👥 成员数：{guild.member_count}"
         )
+            logging.info(f"✅ Bot 加入新服务器：{guild.name}（ID: {guild.id}）")
+            logging.info(f"👥 成员数：{guild.member_count}")
         else:
             print("⚠️ 不是一个可发送消息的频道类型")
 
