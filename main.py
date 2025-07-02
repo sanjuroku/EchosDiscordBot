@@ -844,7 +844,7 @@ async def steam(interaction: Interaction,
     
     header = zh_info.get("header_image") or en_info.get("header_image")
     store_url = f"https://store.steampowered.com/app/{app_id}"
-    price_info = zh_info.get("price_overview") or en_info.get("price_overview")
+    price_info = en_info.get("price_overview") or zh_info.get("price_overview")
 
     logging.info(f"🎮 游戏名称：{display_zh_name} / {display_en_name}")
     logging.info(f"🔗 商店链接：{store_url}")
@@ -859,8 +859,8 @@ async def steam(interaction: Interaction,
         if discount > 0:
             discount_amount = initial - final  # 计算减免金额
             price_text = (
-                f"现价: {final:.2f} {currency}\n原价: {initial:.2f} {currency}（已减免 {discount}%"
-                f"，优惠了 {discount_amount:.2f} {currency}）"
+                f"现价: {final:.2f} {currency}\n原价: {initial:.2f} {currency}（**已减免 {discount}%"
+                f"，优惠了 {discount_amount:.2f} {currency}）**"
             )
         else:
             price_text = f"价格：{final:.2f} {currency}"
