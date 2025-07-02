@@ -9,8 +9,9 @@ import asyncio
 import pytz
 import logging
 import asyncpraw
+import socket
 from discord.ext import commands
-from openai import OpenAI
+from openai import OpenAI, OpenAIError, RateLimitError
 from openai.types.chat import ChatCompletionMessageParam
 from datetime import datetime
 from asyncio_throttle.throttler import Throttler
@@ -47,16 +48,6 @@ async def send_message(channel, content):
     async with throttler:
         await channel.send(content)
 
-
-# gpt_call
-async def gpt_call(*args, **kwargs):
-
-    def sync_call():
-        return client.chat.completions.create(*args, **kwargs)
-
-    return await asyncio.to_thread(sync_call)
-
-
 # 初始化 Discord bot
 intents = discord.Intents.default()
 intents.message_content = True 
@@ -65,6 +56,26 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 # 初始化 OpenAI 客户端
 client = OpenAI(api_key=OPENAI_API_KEY)
+
+# ============================== #
+# gpt_call 函数
+# ============================== #
+async def gpt_call(*args, **kwargs):
+
+    def sync_call():
+        #return client.chat.completions.create(*args, **kwargs)
+        try:
+            return client.chat.completions.create(*args, **kwargs)
+        except RateLimitError as e:
+            raise RuntimeError("😵 GPT 太忙了，限流了，请稍后再试 >.<") from e
+        except socket.timeout as e:
+            raise RuntimeError("⌛ 请求超时啦，请稍后重试～") from e
+        except OpenAIError as e:
+            raise RuntimeError(f"❌ OpenAI 返回错误：{str(e)}") from e
+        except Exception as e:
+            raise RuntimeError(f"❌ 未知错误：{str(e)}") from e
+
+    return await asyncio.to_thread(sync_call)
 
 # ============================== #
 # 全局变量与常量定义
@@ -297,6 +308,19 @@ async def on_ready():
     except Exception as e:
         logging.error(e)
     logging.info(f"✅ 已登录为 {bot.user}")
+
+# 加入新服务器触发日志提醒
+@bot.event
+async def on_guild_join(guild):
+    log_channel = bot.get_channel(1120505367735062568) 
+    if log_channel:
+        if isinstance(log_channel, discord.TextChannel) or isinstance(log_channel, discord.Thread):
+            await log_channel.send(
+            f"✅ Bot 加入了新服务器：**{guild.name}**（ID: `{guild.id}`）\n"
+            f"👥 成员数：{guild.member_count}"
+        )
+        else:
+            print("⚠️ 不是一个可发送消息的频道类型")
 
 
 # ============================== #
