@@ -807,9 +807,9 @@ async def steam(interaction: Interaction,
             await interaction.followup.send("❌ Steam商店未找到匹配的游戏，请检查输入。", ephemeral=True)
             return
 
-        # 3. 获取游戏详情，默认cn和us
+        # 3. 获取游戏详情，默认cn
         zh_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc=cn&l=zh"
-        en_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc=us&l=en"
+        en_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc={region_code}&l=en"
         logging.info(f"🔍 正在搜索游戏：{names}")
         logging.info(f"🔗 搜索链接：{zh_url}")
         logging.info(f"🔗 备用链接：{en_url}")
