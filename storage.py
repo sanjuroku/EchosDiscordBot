@@ -23,7 +23,8 @@ class StorageManager:
             json.dump(self.data, f, ensure_ascii=False, indent=2)
 
     def get(self, key, default=None):
-        return self.data.get(key, default)
+        value = self.data.get(key, default)
+        return default if value is None else value
 
     def set(self, key, value):
         self.data[key] = value

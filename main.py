@@ -290,7 +290,23 @@ def update_guilds_json():
             "joined_at": datetime.now(pytz.timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M:%S %Z")
         } for g in bot.guilds
     ]
-    guild_list_storage.set("guilds", data)
+    existing = guild_list_storage.get("guilds", []) or []
+    if not isinstance(existing, list):
+        existing = []
+    merged = {str(g["id"]): g for g in existing}  # 用 dict 合并，防重复
+    
+    for g in bot.guilds:
+        merged[str(g.id)] = {
+            "id": g.id,
+            "name": g.name,
+            "member_count": g.member_count,
+            "owner_id": g.owner_id,
+            "joined_at": datetime.now(pytz.timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M:%S %Z")
+        }
+
+    guild_list_storage.set("guilds", list(merged.values()))
+
+    
 @bot.event
 async def on_guild_join(guild):
     update_guilds_json()
@@ -1111,9 +1127,12 @@ async def change_status(
         await interaction.response.send_message("✅ Bot 状态已更新！", ephemeral=True)
         
         # 用 StorageManager 保存设置
-        status_storage.set("status", online_status.value)
-        status_storage.set("activity_type", activity_type.value if activity_type else "")
-        status_storage.set("text", text or "")
+        status_storage.data.update({
+            "status": online_status.value,
+            "activity_type": activity_type.value if activity_type else "",
+            "text": text or ""
+        })
+        status_storage.save()
         
         logging.info(f"🟢 状态已更改为 {online_status.value}" + (f" / {activity_type.value}：{text}" if activity_type and text else ""))
         
