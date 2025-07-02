@@ -857,8 +857,10 @@ async def steam(interaction: Interaction,
         discount = price_info["discount_percent"]
 
         if discount > 0:
+            discount_amount = initial - final  # 计算减免金额
             price_text = (
-                f"现价：{final:.2f} {currency}（原价：{initial:.2f}，折扣：**{discount}%**）"
+                f"现价：{final:.2f} {currency}（原价：{initial:.2f}，已减免**{discount}%**"
+                f"，优惠了{discount_amount:.2f}{currency}）"
             )
         else:
             price_text = f"价格：{final:.2f} {currency}"
