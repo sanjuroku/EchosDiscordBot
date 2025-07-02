@@ -17,6 +17,7 @@ from datetime import datetime
 from asyncio_throttle.throttler import Throttler
 from discord import Interaction, Embed, app_commands
 from typing import Optional
+from storage import StorageManager
 import aiohttp
 import re
 
@@ -80,15 +81,29 @@ async def gpt_call(*args, **kwargs):
 # ============================== #
 # 全局变量与常量定义
 # ============================== #
-user_histories = {}  # 存储用户对话历史
-user_summaries = {}  # 存储用户对话摘要
-user_roles = {}  # 存储用户角色设定
-
+CONFIG_DIR = "config"
+SAVEDATA_DIR = "savedata"
 MAX_HISTORY = 100  # 最多保留最近 100 条消息（user+assistant 各算一条）
 SUMMARY_TRIGGER = 100  # 当历史记录超过 100 条消息时，自动进行总结
-HISTORY_FILE = "histories.json"
-SUMMARY_FILE = "summaries.json"
-ROLE_FILE = "roles.json"
+
+#HISTORY_FILE = os.path.join(SAVEDATA_DIR, "histories.json")
+#SUMMARY_FILE = os.path.join(SAVEDATA_DIR, "summaries.json")
+#ROLE_FILE = os.path.join(CONFIG_DIR, "roles.json")
+#GUILD_LIST_FILE = os.path.join(CONFIG_DIR, "guilds.json")
+#TRIGGER_FILE = os.path.join(CONFIG_DIR, "disabled_triggers.json")
+#STATUS_FILE = os.path.join(CONFIG_DIR, "status_config.json")
+
+# 使用StorageManager封装
+history_storage = StorageManager(os.path.join(SAVEDATA_DIR, "histories.json"))
+summary_storage = StorageManager(os.path.join(SAVEDATA_DIR, "summaries.json"))
+role_storage = StorageManager(os.path.join(CONFIG_DIR, "roles.json"))
+trigger_storage = StorageManager(os.path.join(CONFIG_DIR, "disabled_triggers.json"))
+guild_list_storage = StorageManager(os.path.join(CONFIG_DIR, "guilds.json"))
+status_storage = StorageManager(os.path.join(CONFIG_DIR, "status_config.json"))
+
+user_histories = history_storage.data  # 存储用户对话历史
+user_summaries = summary_storage.data  # 存储用户对话摘要
+user_roles = role_storage.data  # 存储用户角色设定
 
 # 默认 System Prompt
 DEFAULT_SYSTEM_PROMPT = "你是一个温柔、聪明、擅长倾听的 AI 小助手，名字是咋办。\n请你认真回答用户的问题。默认用户都为女性，使用女性代称，性别优先词为她、她们，不使用女性歧视的词语，禁止称呼用户小仙女、小姐姐。\n禁止油腻、卖弄、邀功。如果你不知道答案，请诚实地回答不知道，不要编造内容。\n你的语言风格亲切可爱，可以在聊天中加点轻松的颜文字、emoji表情。\n回复内容不要太啰嗦，保证在800字以内。\n当用户没有说其他内容，只有“咋办”这两个字的时候，你就只能回复“咋办”两个字，不准加任何的符号或者句子，其他时候正常对话。"
@@ -107,27 +122,14 @@ def get_user_lock(user_id: str) -> asyncio.Lock:
 # 历史记录持久化函数
 # ============================== #
 def save_histories():
-    """保存所有用户的历史记录到文件"""
-    try:
-        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(user_histories, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        logging.error(f"保存历史记录出错：{e}")
+    """保存用户历史记录到文件"""
+    history_storage.save()
 
 
 def load_histories():
     """从文件加载用户历史记录"""
     global user_histories
-    if os.path.exists(HISTORY_FILE):
-        try:
-            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-                user_histories = json.load(f)
-            logging.info(f"✅ 已从 {HISTORY_FILE} 加载历史记录，共 {len(user_histories)} 个用户")
-        except Exception as e:
-            logging.warning(f"⚠️ 读取历史记录失败，已忽略：{e}")
-            user_histories = {}
-    else:
-        user_histories = {}
+    user_histories = history_storage.data
 
 
 # ============================== #
@@ -135,29 +137,13 @@ def load_histories():
 # ============================== #
 def save_summaries():
     """保存用户摘要数据"""
-    try:
-        with open(SUMMARY_FILE, "w", encoding="utf-8") as f:
-            json.dump(user_summaries, f, ensure_ascii=False, indent=2)
-            
-            logging.info(f"✅ 已保存摘要到 {SUMMARY_FILE}，共 {len(user_summaries)} 个用户")
-            
-    except Exception as e:
-        logging.error(f"❌ 保存摘要失败：{e}")
+    summary_storage.save()
 
 
 def load_summaries():
     """加载用户摘要数据"""
     global user_summaries
-    if os.path.exists(SUMMARY_FILE):
-        try:
-            with open(SUMMARY_FILE, "r", encoding="utf-8") as f:
-                user_summaries = json.load(f)
-            logging.info(f"✅ 已从 {SUMMARY_FILE} 加载摘要，共 {len(user_summaries)} 个用户")
-        except Exception as e:
-            logging.warning(f"摘要读取失败，已忽略：{e}")
-            user_summaries = {}
-    else:
-        user_summaries = {}
+    user_summaries = summary_storage.data
 
 
 # ============================== #
@@ -223,26 +209,13 @@ async def summarize_history(user_id: str):
 # ============================== #
 def save_roles():
     """保存用户角色设定"""
-    try:
-        with open(ROLE_FILE, "w", encoding="utf-8") as f:
-            json.dump(user_roles, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        logging.error(f"❌ 保存 role 失败：{e}")
+    role_storage.save()
 
 
 def load_roles():
     """加载用户角色设定"""
     global user_roles
-    if os.path.exists(ROLE_FILE):
-        try:
-            with open(ROLE_FILE, "r", encoding="utf-8") as f:
-                user_roles = json.load(f)
-            logging.info(f"✅ 已从 {ROLE_FILE} 加载用户 role，共 {len(user_roles)} 个")
-        except Exception as e:
-            logging.warning(f"⚠️ 读取 role 失败，已忽略：{e}")
-            user_roles = {}
-    else:
-        user_roles = {}
+    user_roles = role_storage.data
 
 
 # ============================== #
@@ -270,87 +243,134 @@ async def on_ready():
         activity = None
         
         # 加载上次保存的状态
-        if os.path.exists("status_config.json"):
-            with open("status_config.json", "r", encoding="utf-8") as f:
-                data = json.load(f)
-            
-            status = status_map.get(data.get("status"), discord.Status.idle)
-            activity_type = data.get("activity_type")
-            text = data.get("text")
+        data = status_storage.data
+        status_str = data.get("status")
+        status = status_map.get(str(status_str), discord.Status.idle)
+        activity_type = data.get("activity_type")
+        text = data.get("text")
 
-            if activity_type and text:
-                activity_func = activity_map.get(activity_type)
-                if activity_func:
-                    activity = activity_func(text)
+        if activity_type and text:
+            activity_func = activity_map.get(activity_type)
+            if activity_func:
+                activity = activity_func(text)
             
-            logging.info(f"✅ 已恢复上次状态：{status} - {activity_type} {text}") 
+        logging.info(f"✅ 已恢复上次状态：{status} - {activity_type} {text}") 
             
-        else:
-            # 默认状态活动
-            status = discord.Status.idle
-            text = "发出了咋办的声音"
-            activity = discord.CustomActivity(name=text)
-            
-            logging.info(f"✅ 已设置默认状态：{status} - {text}") 
-            
-        # 设置状态
-        await bot.change_presence(status=status, activity=activity)
-        
-        # 同步全局命令
-        synced = await bot.tree.sync()
-        
-        logging.info(f"✅ Slash commands synced: {len(synced)} 个全局指令已注册")
-        
-        # 打印所有已注册的指令名称
-        command_names = [cmd.name for cmd in bot.tree.get_commands()]
-        logging.info(f"✅ 已注册的全局指令：{command_names}")
-
     except Exception as e:
-        logging.error(e)
+        # 默认状态活动
+        status = discord.Status.idle
+        text = "发出了咋办的声音"
+        activity = discord.CustomActivity(name=text)
+            
+        logging.info(f"✅ 已设置默认状态：{status} - {text}") 
+            
+    # 设置状态
+    await bot.change_presence(status=status, activity=activity)
+        
+    # 同步全局命令
+    synced = await bot.tree.sync()
+        
+    logging.info(f"✅ Slash commands synced: {len(synced)} 个全局指令已注册")
+        
+    # 打印所有已注册的指令名称
+    command_names = [cmd.name for cmd in bot.tree.get_commands()]
+    logging.info(f"✅ 已注册的全局指令：{command_names}")
+    
     logging.info(f"✅ 已登录为 {bot.user}")
+    logging.info(f"📋 当前加入了 {len(bot.guilds)} 个服务器：")
 
 # 加入新服务器触发日志提醒
+def update_guilds_json():
+    data = [
+        {
+            "id": g.id,
+            "name": g.name,
+            "member_count": g.member_count,
+            "owner_id": g.owner_id,
+            "joined_at": datetime.now(pytz.timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M:%S %Z")
+        } for g in bot.guilds
+    ]
+    guild_list_storage.set("guilds", data)
 @bot.event
 async def on_guild_join(guild):
+    update_guilds_json()
+    
     log_channel = bot.get_channel(1120505368531976244) 
-    if log_channel:
-        if isinstance(log_channel, discord.TextChannel) or isinstance(log_channel, discord.Thread):
-            await log_channel.send(
-            f"✅ Bot 加入了新服务器：**{guild.name}**（ID: `{guild.id}`）\n"
-            f"👥 成员数：{guild.member_count}"
-        )
-            logging.info(f"✅ Bot 加入新服务器：{guild.name}（ID: {guild.id}）")
-            logging.info(f"👥 成员数：{guild.member_count}")
-        else:
-            print("⚠️ 不是一个可发送消息的频道类型")
+    jst = pytz.timezone("Asia/Tokyo")
+    joined_time = datetime.now(jst).strftime("%Y-%m-%d %H:%M:%S %Z")
+    
+    if not isinstance(log_channel, (discord.TextChannel, discord.Thread)):
+        logging.warning("⚠️ log_channel 不是文本频道，无法发送消息")
+        return
+
+    try:
+        owner = await guild.fetch_owner()
+    except Exception as e:
+        owner = f"未知（获取失败: {e}）"
+
+    message = (
+        f"✅ Bot 加入了新服务器：**{guild.name}**（ID: `{guild.id}`）\n"
+        f"👥 拥有者：{owner}（ID: {guild.owner_id}）\n"
+        f"👥 成员数：{guild.member_count}\n"
+        f"🕒 加入时间：{joined_time}"
+    )
+
+    await log_channel.send(message)
+
+    logging.info(f"✅ Bot 加入新服务器：**{guild.name}**（ID: {guild.id}）")
+    logging.info(f"👥 拥有者：{owner}（ID: {guild.owner_id}）")
+    logging.info(f"👥 成员数：{guild.member_count}")
+    logging.info(f"🕒 加入时间：{joined_time}")
+    for each_guild in bot.guilds:
+        logging.info(f"📋 服务器名：{each_guild.name} 成员数：{each_guild.member_count}")
+
+@bot.event
+async def on_guild_remove(guild):
+    update_guilds_json() 
+
+    log_channel = bot.get_channel(1120505368531976244)
+    jst = pytz.timezone("Asia/Tokyo")
+    removed_time = datetime.now(jst).strftime("%Y-%m-%d %H:%M:%S %Z")
+    
+    if not isinstance(log_channel, (discord.TextChannel, discord.Thread)):
+        logging.warning("⚠️ log_channel 不是文本频道，无法发送消息")
+        return
+
+    try:
+        owner = await guild.fetch_owner()
+    except Exception as e:
+        owner = f"未知（获取失败: {e}）"
+    
+    message = (
+        f"❌ Bot 被移除了服务器：**{guild.name}**（ID: `{guild.id}`）\n"
+        f"👥 拥有者：{owner}（ID: {guild.owner_id}）\n"
+        f"👥 成员数：{guild.member_count}\n"
+        f"🕒 移除时间：{removed_time}"
+    )
+
+    await log_channel.send(message)
+
+    logging.info(f"❌ Bot 被移除了服务器：**{guild.name}**（ID: {guild.id}）")
+    logging.info(f"👥 拥有者：{owner}（ID: {guild.owner_id}）")
+    logging.info(f"👥 成员数：{guild.member_count}")
+    logging.info(f"🕒 移除时间：{removed_time}")
+    for each_guild in bot.guilds:
+        logging.info(f"📋 服务器名：{each_guild.name} 成员数：{each_guild.member_count}")
 
 
 # ============================== #
 # 聊天记录中trigger咋办
 # ============================== #
-TRIGGER_FILE = "disabled_triggers.json"
 disabled_triggers: set[str] = set()
 
 # 加载triggers设置的函数
 def load_triggers_off():
     global disabled_triggers
-    if os.path.exists(TRIGGER_FILE):
-        try:
-            with open(TRIGGER_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                disabled_triggers = set(data)
-                logging.info(f"✅ 已加载triggers_off设置，共 {len(disabled_triggers)} 个用户")
-        except Exception as e:
-            logging.warning(f"⚠️ 加载triggers_off设置失败：{e}")
-            disabled_triggers = set()
+    disabled_triggers = set(trigger_storage.get("disabled_triggers") or [])
             
 # 保存triggers_off设置的函数
 def save_triggers_off():
-    try:
-        with open(TRIGGER_FILE, "w", encoding="utf-8") as f:
-            json.dump(list(disabled_triggers), f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        logging.error(f"❌ 保存triggers_off设置失败：{e}")
+    trigger_storage.set("disabled_triggers", list(disabled_triggers))
         
 @bot.event
 async def on_message(message):
@@ -1090,13 +1110,10 @@ async def change_status(
         await bot.change_presence(status=status, activity=activity)
         await interaction.response.send_message("✅ Bot 状态已更新！", ephemeral=True)
         
-        # 保存设置到本地文件
-        with open("status_config.json", "w", encoding="utf-8") as f:
-            json.dump({
-                "status": online_status.value,
-                "activity_type": activity_type.value if activity_type else "",
-                "text": text or ""
-            }, f, ensure_ascii=False, indent=2)
+        # 用 StorageManager 保存设置
+        status_storage.set("status", online_status.value)
+        status_storage.set("activity_type", activity_type.value if activity_type else "")
+        status_storage.set("text", text or "")
         
         logging.info(f"🟢 状态已更改为 {online_status.value}" + (f" / {activity_type.value}：{text}" if activity_type and text else ""))
         
