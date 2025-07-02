@@ -17,7 +17,7 @@ from datetime import datetime
 from asyncio_throttle.throttler import Throttler
 from discord import Interaction, Embed, app_commands
 from typing import Optional
-from storage import StorageManager
+from storage import DictStorageManager, ListStorageManager
 import aiohttp
 import re
 
@@ -94,12 +94,12 @@ SUMMARY_TRIGGER = 100  # 当历史记录超过 100 条消息时，自动进行�
 #STATUS_FILE = os.path.join(CONFIG_DIR, "status_config.json")
 
 # 使用StorageManager封装
-history_storage = StorageManager(os.path.join(SAVEDATA_DIR, "histories.json"))
-summary_storage = StorageManager(os.path.join(SAVEDATA_DIR, "summaries.json"))
-role_storage = StorageManager(os.path.join(CONFIG_DIR, "roles.json"))
-trigger_storage = StorageManager(os.path.join(CONFIG_DIR, "disabled_triggers.json"))
-guild_list_storage = StorageManager(os.path.join(CONFIG_DIR, "guilds.json"))
-status_storage = StorageManager(os.path.join(CONFIG_DIR, "status_config.json"))
+history_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "histories.json"))
+summary_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "summaries.json"))
+role_storage = DictStorageManager(os.path.join(CONFIG_DIR, "roles.json"))
+trigger_storage = ListStorageManager(os.path.join(CONFIG_DIR, "disabled_triggers.json"))
+guild_list_storage = DictStorageManager(os.path.join(CONFIG_DIR, "guilds.json"))
+status_storage = DictStorageManager(os.path.join(CONFIG_DIR, "status_config.json"))
 
 user_histories = history_storage.data  # 存储用户对话历史
 user_summaries = summary_storage.data  # 存储用户对话摘要
@@ -382,11 +382,12 @@ disabled_triggers: set[str] = set()
 # 加载triggers设置的函数
 def load_triggers_off():
     global disabled_triggers
-    disabled_triggers = set(trigger_storage.get("disabled_triggers") or [])
+    disabled_triggers = set(trigger_storage.data)
             
 # 保存triggers_off设置的函数
 def save_triggers_off():
-    trigger_storage.set("disabled_triggers", list(disabled_triggers))
+    trigger_storage.data = list(disabled_triggers)
+    trigger_storage.save()
         
 @bot.event
 async def on_message(message):
