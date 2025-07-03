@@ -754,16 +754,33 @@ async def timezone(interaction: discord.Interaction):
     }
 
     now_utc = datetime.now(pytz.utc)
-    time_table = []
+    
+    #time_table = []
+
+    #for label, tz_name in timezones.items():
+    #    tz = pytz.timezone(tz_name)
+    #    local_time = now_utc.astimezone(tz)
+    #    formatted_time = local_time.strftime("%Y-%m-%d %H:%M:%S")
+    #    time_table.append(f"{label}：`{formatted_time}`")
+
+    #message = "🕒 当前时间对照表：\n\n" + "\n".join(time_table)
+    # 构建 Embed
+    
+    embed = Embed(
+        title="🕒 当前时间对照表",
+        color=get_random_embed_color()
+    )
 
     for label, tz_name in timezones.items():
         tz = pytz.timezone(tz_name)
         local_time = now_utc.astimezone(tz)
         formatted_time = local_time.strftime("%Y-%m-%d %H:%M:%S")
-        time_table.append(f"{label}：`{formatted_time}`")
+        embed.add_field(name=label, value=f"`{formatted_time}`", inline=True)
 
-    message = "🕒 当前时间对照表：\n\n" + "\n".join(time_table)
-    await interaction.followup.send(message)
+    embed.set_footer(text="数据基于当前 UTC 时间")
+    embed.timestamp = now_utc  # 添加时间戳
+    
+    await interaction.followup.send(embed=embed)
     
     logging.info("✅ 已发送当前时间对照表")
 
