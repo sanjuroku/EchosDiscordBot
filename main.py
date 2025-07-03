@@ -1062,7 +1062,7 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
     reddit_seen_urls = reddit_sent_cache.get(user_id, set())
 
     # 从 posts 中挑选没有发送过的
-    unseen_posts = [post for post in posts if post.url not in reddit_seen_urls]
+    unseen_posts = [post for post in posts if post["url"] not in reddit_seen_urls]
 
     if not unseen_posts:
         unseen_posts = posts  # 如果全都看过了就重置
