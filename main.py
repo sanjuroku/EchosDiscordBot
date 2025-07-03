@@ -778,9 +778,9 @@ async def timezone(interaction: discord.Interaction):
 
     # 构建 Embed
     embed = Embed(
-        title="🕒 当前时间对照表",
+        title="🕒 当前时间的全球时区对照表",
         description=time_text,
-        color=0x3498db  # 或者 get_random_embed_color()
+        color=get_random_embed_color()
     )
     embed.set_footer(text="数据基于当前 UTC 时间")
     
