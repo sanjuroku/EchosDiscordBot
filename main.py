@@ -2,7 +2,7 @@
 # 模块导入与初始化
 # ============================== #
 import os
-import json
+import time
 import discord
 import random
 import asyncio
@@ -102,6 +102,8 @@ role_storage = DictStorageManager(os.path.join(CONFIG_DIR, "roles.json"))
 trigger_storage = ListStorageManager(os.path.join(CONFIG_DIR, "disabled_triggers.json"))
 guild_list_storage = DictStorageManager(os.path.join(CONFIG_DIR, "guilds.json"))
 status_storage = DictStorageManager(os.path.join(CONFIG_DIR, "status_config.json"))
+reddit_cache_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "reddit_cache.json"))
+reddit_sent_cache_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "reddit_sent_cache.json"))
 
 user_histories = history_storage.data  # 存储用户对话历史
 user_summaries = summary_storage.data  # 存储用户对话摘要
@@ -220,7 +222,7 @@ def load_roles():
     user_roles = role_storage.data
 
 # ============================== #
-# 一些辅助函数
+# 获取随机RGB颜色函数
 # ============================== #
 # 获取一个随机的 RGB Embed 颜色（避免太暗的颜色和默认灰）
 def get_random_embed_color():
@@ -231,6 +233,66 @@ def get_random_embed_color():
         # 避免颜色过暗或接近 Discord 默认灰色
         if (r, g, b) != (54, 57, 63):
             return Color.from_rgb(r, g, b)
+
+# ============================== #
+# Reddit 缓存持久化函数
+# ============================== #
+def save_reddit_cache():
+    reddit_cache_storage.set("cache", reddit_cache)
+
+def save_reddit_sent_cache():
+    # 将 set 转为 list 存储
+    serializable_cache = {uid: list(urls) for uid, urls in reddit_sent_cache.items()}
+    reddit_sent_cache_storage.set("sent_cache", serializable_cache)
+
+def load_reddit_cache():
+    global reddit_cache
+    reddit_cache = reddit_cache_storage.get("cache", {})
+
+def load_reddit_sent_cache():
+    global reddit_sent_cache
+    raw = reddit_sent_cache_storage.get("sent_cache", {})
+    reddit_sent_cache = {uid: set(urls) for uid, urls in raw.items()}
+    
+# ============================== #
+# Reddit 相关缓存与函数
+# ============================== #
+# 内存缓存结构：{subreddit_name: {"data": [...], "timestamp": float}}
+reddit_cache = {}
+CACHE_DURATION = 1800 # 缓存持续时间，单位为秒（30分钟）
+
+# 获取reddit帖子
+def get_cached_posts(subreddit_name: str):
+    entry = reddit_cache.get(subreddit_name)
+    if entry and (time.time() - entry["timestamp"]) < CACHE_DURATION:
+        return entry["data"]
+    return None
+
+# 设置reddit帖子缓存
+def set_cache(subreddit_name: str, posts: list):
+    reddit_cache[subreddit_name] = {
+        "data": posts,
+        "timestamp": time.time()
+    }
+    save_reddit_cache()
+
+# 设置用户看过的reddit帖子缓存
+reddit_sent_cache = {}  # 格式：{user_id: set(url1, url2, ...)}
+MAX_REDDIT_HISTORY = 20
+
+# ============================== #
+# 简化 Reddit 帖子数据函数
+# ============================== #
+def simplify_post(post):
+    return {
+        "title": post.title,
+        "url": post.url,
+        "permalink": post.permalink,
+        "is_video": post.is_video,
+        "media": post.media if post.is_video else None,
+        "stickied": post.stickied,
+        "thumbnail": post.thumbnail if is_valid_url(post.thumbnail) else None,
+    }
 
 # ============================== #
 # bot 启动
@@ -423,6 +485,8 @@ async def on_message(message):
 @bot.tree.command(name="ask", description="咋办")
 async def ask(interaction: discord.Interaction, prompt: str):
     await interaction.response.defer() 
+    await interaction.edit_original_response(content="💭 咋办思考中...")
+    
     user_id = str(interaction.user.id)
     lock = get_user_lock(user_id)
 
@@ -573,6 +637,8 @@ TAROT_CARDS = [
 @bot.tree.command(name="tarot", description="抽一张塔罗牌解读你的困惑")
 async def tarot(interaction: discord.Interaction, wish_text: str):
     await interaction.response.defer()
+    await interaction.edit_original_response(content="💭 咋办抽取塔罗牌中...")
+    
     user_id = str(interaction.user.id)
 
     # 随机抽牌
@@ -623,6 +689,8 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
 @bot.tree.command(name="fortune", description="占卜你的今日运势并解读")
 async def fortune(interaction: discord.Interaction):
     await interaction.response.defer()
+    await interaction.edit_original_response(content="💭 咋办占卜中...")
+    
     user_id = str(interaction.user.id)
 
     # 随机抽牌
@@ -789,6 +857,7 @@ async def steam(interaction: Interaction,
                 game_name: str,
                 region: Optional[app_commands.Choice[str]] = None):
     await interaction.response.defer()
+    await interaction.edit_original_response(content="💭 咋办敲打Steam中...")
 
     region_code = region.value if region else "cn"
     region_display = region.name if region else "国区（人民币）"
@@ -905,10 +974,12 @@ async def steam(interaction: Interaction,
 # ============================== #
 # 初始化 Reddit 客户端的函数
 async def get_reddit():
+    timeout = aiohttp.ClientTimeout(total=20)  # 设置总超时时间为 20 秒
     return asyncpraw.Reddit(
         client_id=os.environ.get("REDDIT_CLIENT_ID"),
         client_secret=os.environ.get("REDDIT_CLIENT_SECRET"),
         user_agent=os.environ.get("REDDIT_USER_AGENT"),
+        requestor_kwargs={"timeout": timeout},
     )
 
 # 检验URL是否有效
@@ -929,6 +1000,9 @@ subreddit_choices = [
 @app_commands.choices(subreddit=subreddit_choices)
 async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands.Choice[str]] = None):
     await interaction.response.defer()
+    await interaction.edit_original_response(content="💭 咋办敲打Reddit中...")
+    
+    user_id = str(interaction.user.id)
 
     # 调用初始化 Reddit 客户端的函数
     reddit = await get_reddit()
@@ -936,73 +1010,116 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
     posts = []
     # 根据用户选择或随机选一个 subreddit
     subreddit_name = subreddit.value if subreddit else random.choice(CUTE_SUBREDDITS)
-    subreddit_obj = await reddit.subreddit(subreddit_name)
+    
+    # 检查缓存
+    cached = get_cached_posts(subreddit_name)
+    
+    if cached:
+        logging.info(f"📦 使用缓存数据 r/{subreddit_name}（{len(cached)} 条）")
+        posts = cached
+        
+    else:
+        posts = []
+        
+        try:
+            # 获取前 50 条热门帖子，包含图片和视频
+            subreddit_obj = await reddit.subreddit(subreddit_name)
+            async for post in subreddit_obj.hot(limit=50):
+                if post.stickied:
+                    continue
 
-    # 获取前 50 条热门帖子，包含图片和视频
-    async for post in subreddit_obj.hot(limit=50):
-        if post.stickied:
-            continue
+                # 图片链接
+                if post.url.endswith((".jpg", ".jpeg", ".png", ".gif")):
+                    posts.append(simplify_post(post))
 
-        # 图片链接
-        if post.url.endswith((".jpg", ".jpeg", ".png", ".gif")):
-            posts.append(post)
+                # Reddit 原生视频（非外链）
+                elif post.is_video and isinstance(post.media, dict) and "reddit_video" in post.media:
+                    posts.append(simplify_post(post))
 
-        # Reddit 原生视频（非外链）
-        elif post.is_video and isinstance(post.media, dict) and "reddit_video" in post.media:
-            posts.append(post)
+                # gifv（Imgur 或 Gfycat）
+                elif post.url.endswith((".mp4", ".webm", ".gifv")):
+                    posts.append(simplify_post(post))
 
-        # gifv（Imgur 或 Gfycat）
-        elif post.url.endswith((".mp4", ".webm", ".gifv")):
-            posts.append(post)
-
-    logging.info(f"🔍 从 r/{subreddit_name} 获取 {len(posts)} 条图片/视频帖子")
-
+            logging.info(f"🔍 从 r/{subreddit_name} 获取 {len(posts)} 条图片/视频帖子")
+            set_cache(subreddit_name, posts)  # 成功后设置缓存
+            
+        except asyncio.TimeoutError:
+            await interaction.followup.send(f"❌ 访问 r/{subreddit_name} 超时了，请稍后再试！>.<")
+            logging.warning(f"❌ 访问 Reddit 超时：r/{subreddit_name}")
+            return
+        
+        except Exception as e:
+            await interaction.followup.send("❌ 发生未知错误，请稍后再试 >.<")
+            logging.exception("❌ Reddit 请求失败")
+            return
+    
     if not posts:
-        await interaction.followup.send("没找到合适的结果捏TT，请稍后再试。")
+        await interaction.followup.send("❌ 没找到合适的结果捏TT，请稍后再试 >.<")
+        logging.info(f"❌ 没有找到 r/{subreddit_name} 的帖子")
         return
 
-    selected_post = random.choice(posts)
+    # 取用户已看过的链接集合（最多保存 MAX_REDDIT_HISTORY 条）
+    reddit_seen_urls = reddit_sent_cache.get(user_id, set())
+
+    # 从 posts 中挑选没有发送过的
+    unseen_posts = [post for post in posts if post.url not in reddit_seen_urls]
+
+    if not unseen_posts:
+        unseen_posts = posts  # 如果全都看过了就重置
+
+    # 随机挑一个
+    selected_post = random.choice(unseen_posts)
     
-    title = selected_post.title
+    # 记录这次发送过的 URL
+    reddit_seen_urls.add(selected_post["url"])
+    if len(reddit_seen_urls) > MAX_REDDIT_HISTORY:
+        reddit_seen_urls = set(list(reddit_seen_urls)[-MAX_REDDIT_HISTORY:])  # 保留最新 N 条
+    reddit_sent_cache[user_id] = reddit_seen_urls
+    save_reddit_sent_cache()
+    
+    title = selected_post["title"]
     if len(title) > 256:
         title = title[:253] + "..."
 
     embed = discord.Embed(
         title=title,
-        url=f"https://reddit.com{selected_post.permalink}",
+        url=f"https://reddit.com{selected_post['permalink']}",
         description=f"From r/{subreddit_name}",
         color=get_random_embed_color(),
     )
     
+    desc = embed.description or ''
+    
     # 如果是图片或 gif
-    if selected_post.url.endswith((".jpg", ".jpeg", ".png", ".gif")):
-        if is_valid_url(selected_post.url):
-            embed.set_image(url=selected_post.url)
-        logging.info(f"🐾 图片链接：{selected_post.url}")
+    if selected_post["url"].endswith((".jpg", ".jpeg", ".png", ".gif")):
+        if is_valid_url(selected_post["url"]):
+            embed.set_image(url=selected_post["url"])
+        logging.info(f"🐾 图片链接：{selected_post['url']}")
 
     # 如果是 Reddit 原生视频
-    elif (selected_post.is_video and selected_post.media and isinstance(selected_post.media, dict) and "reddit_video" in selected_post.media):
-        thumbnail_url = selected_post.thumbnail  # 获取缩略图
+    elif (selected_post["is_video"] and selected_post["media"] and isinstance(selected_post["media"], dict) and "reddit_video" in selected_post["media"]):
+        thumbnail_url = selected_post.get("thumbnail")  # 获取缩略图
         if is_valid_url(thumbnail_url):
             embed.set_image(url=thumbnail_url)
-        video_url = selected_post.media["reddit_video"]["fallback_url"]
-        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({video_url})" + "\n注意：Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
+        media = selected_post.get("media") or {}
+        video_url = media.get("reddit_video", {}).get("fallback_url")
+        embed.description = f"{desc}\n[🐾 Click to watch / 点我看视频捏 🐾]({video_url})\n注意：Reddit 视频在这里播放没有声音哦，可以点标题查看原贴 >.<"
         logging.info(f"🐾 视频链接：{video_url}")
 
     # 如果是 mp4/webm
-    elif selected_post.url.endswith((".mp4", ".webm")):
-        thumbnail_url = selected_post.thumbnail  # 获取缩略图
+    elif selected_post["url"].endswith((".mp4", ".webm")):
+        thumbnail_url = selected_post.get("thumbnail")  # 获取缩略图
         if is_valid_url(thumbnail_url):
             embed.set_image(url=thumbnail_url)
-        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({selected_post.url})" + "\n注意：Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
-        logging.info(f"🐾 mp4/webm链接：{selected_post.url}")
+        embed.description = f"{desc}\n[🐾 Click to watch / 点我看视频捏 🐾]({selected_post['url']})\n注意：Reddit 视频在这里播放没有声音哦，可以点标题查看原贴 >.<"
+        logging.info(f"🐾 mp4/webm链接：{selected_post['url']}")
     
-    elif selected_post.url.endswith(".gifv"):
-        thumbnail_url = selected_post.thumbnail  # 获取缩略图
+    elif selected_post["url"].endswith(".gifv"):
+        thumbnail_url = selected_post.get("thumbnail")  # 获取缩略图
         if is_valid_url(thumbnail_url):
             embed.set_image(url=thumbnail_url)
-        mp4_url = selected_post.url.replace(".gifv", ".mp4")
-        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({mp4_url})" + "\n注意：Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
+        mp4_url = selected_post["url"].replace(".gifv", ".mp4")
+        embed.description = f"{desc}\n[🐾 Click to watch / 点我看视频捏 🐾]({mp4_url})\n注意：Reddit 视频在这里播放没有声音哦，可以点标题查看原贴 >.<"
         logging.info(f"🐾 gifv转mp4链接：{mp4_url}")
 
     logging.info(f"🐾 随机抽取了 r/{subreddit_name} 的帖子：{title} ")
@@ -1242,4 +1359,6 @@ load_histories()
 load_summaries()
 load_roles()
 load_triggers_off()
+load_reddit_cache()
+load_reddit_sent_cache()
 bot.run(TOKEN)
