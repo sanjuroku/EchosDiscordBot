@@ -219,6 +219,18 @@ def load_roles():
     global user_roles
     user_roles = role_storage.data
 
+# ============================== #
+# 一些辅助函数
+# ============================== #
+# 获取一个随机的 RGB Embed 颜色（避免太暗的颜色和默认灰）
+def get_random_embed_color():
+    while True:
+        r = random.randint(80, 255)
+        g = random.randint(80, 255)
+        b = random.randint(80, 255)
+        # 避免颜色过暗或接近 Discord 默认灰色
+        if (r, g, b) != (54, 57, 63):
+            return Color.from_rgb(r, g, b)
 
 # ============================== #
 # bot 启动
@@ -404,7 +416,6 @@ async def on_message(message):
 
     # 为了确保其他指令还能运行
     await bot.process_commands(message)
-
 
 # ============================== #
 # ask 指令
@@ -771,20 +782,6 @@ async def steam_fuzzy_search(session, search_name, region_code, lang):
     # 3. 回退模糊的第一个
     return items[0]
 
-# 获取随机的embed颜色
-def get_embed_color(has_discount: bool):
-    if has_discount:
-        # 生成一个非黑色的随机 RGB 颜色（避免 Color.default 的灰色）
-        while True:
-            r = random.randint(50, 255)
-            g = random.randint(50, 255)
-            b = random.randint(50, 255)
-            # 避免接近默认灰（54, 57, 63）
-            if (r, g, b) != (54, 57, 63):
-                return Color.from_rgb(r, g, b)
-    else:
-        return Color.default()
-
 @bot.tree.command(name="steam", description="查询 Steam 游戏信息")
 @app_commands.describe(game_name="游戏名称", region="查询地区（默认国区）")
 @app_commands.choices(region=region_choices)
@@ -879,7 +876,7 @@ async def steam(interaction: Interaction,
             price_text = f"价格：{final:.2f} {currency}"
             
         # 设置颜色
-        embed_color = get_embed_color(discount)
+        embed_color = get_random_embed_color()
         
     else:
         price_text = "免费或暂无价格信息"
@@ -888,7 +885,7 @@ async def steam(interaction: Interaction,
     # 构建 Embed 
     embed = Embed(title=f"🎮 {display_zh_name} / {display_en_name}",
                   description=desc,
-                  color=embed_color )
+                  color=embed_color, )
     embed.add_field(name=f"💰 当前价格 💰 {region_display}",
                     value=price_text,
                     inline=False)
@@ -974,6 +971,7 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
         title=title,
         url=f"https://reddit.com{selected_post.permalink}",
         description=f"From r/{subreddit_name}",
+        color=get_random_embed_color(),
     )
     
     # 如果是图片或 gif
@@ -1204,7 +1202,7 @@ async def buymeacoffee(interaction: discord.Interaction):
         title="☕️ Buy Me A Coffee ☕️ 请我喝杯咖啡吧 :3c",
         description="如果你喜欢 咋办 bot 或者被逗笑了一点点，\n可以点击标题通过 ko-fi 请我喝杯咖啡捏！☕️",
         url="https://ko-fi.com/kuroniko07",
-        color=0xfefefe
+        color=discord.Color.from_str("#ffcccc"),
     )
     embed.set_image(url="https://storage.ko-fi.com/cdn/kofi1.png?v=3") 
     embed.set_footer(text="🌈 咋办 bot 目前由一人开发，运行在 VPS 服务器上。\n🌈 相关指令使用的都是 GPT-4.1 模型。\n✨ 谢谢你喜欢咋办 >.< 有任何建议或反馈，也欢迎随时告诉我！\n💌 DM @kuroniko0707")
