@@ -782,7 +782,6 @@ async def timezone(interaction: discord.Interaction):
         description=time_text,
         color=get_random_embed_color()
     )
-    embed.set_footer(text="数据基于当前 UTC 时间")
     
     await interaction.followup.send(embed=embed)
     
