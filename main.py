@@ -775,7 +775,7 @@ async def timezone(interaction: discord.Interaction):
         tz = pytz.timezone(tz_name)
         local_time = now_utc.astimezone(tz)
         formatted_time = local_time.strftime("%Y-%m-%d %H:%M:%S")
-        embed.add_field(name=label, value=f"`{formatted_time}`", inline=True)
+        embed.add_field(name=label, value=f"`{formatted_time}`", inline=False)
 
     embed.set_footer(text="数据基于当前 UTC 时间")
     embed.timestamp = now_utc  # 添加时间戳
