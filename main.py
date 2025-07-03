@@ -171,7 +171,7 @@ async def summarize_history(user_id: str):
             "role":
             "system",
             "content":
-            "请你总结用户和GPT之间从头到尾的所有历史对话，用于后续对话的 context 使用。请使用第三人称、概括性语言，不要重复原话，不要加入评论或判断。重点总结用户的行为特征、情绪倾向、风格偏好和主要话题。\n"
+            "请你在1000字以内总结用户和GPT之间从头到尾的所有历史对话，用于后续对话的 context 使用。请使用第三人称、概括性语言，不要重复原话，不要加入评论或判断。重点总结用户的行为特征、情绪倾向、风格偏好和主要话题。\n"
             },
             {
             "role": "user",
@@ -970,7 +970,7 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
         if is_valid_url(thumbnail_url):
             embed.set_image(url=thumbnail_url)
         video_url = selected_post.media["reddit_video"]["fallback_url"]
-        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({video_url})" + "\n注意：有些 Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
+        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({video_url})" + "\n注意：Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
         logging.info(f"🐾 视频链接：{video_url}")
 
     # 如果是 mp4/webm
@@ -978,7 +978,7 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
         thumbnail_url = selected_post.thumbnail  # 获取缩略图
         if is_valid_url(thumbnail_url):
             embed.set_image(url=thumbnail_url)
-        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({selected_post.url})" + "\n注意：有些 Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
+        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({selected_post.url})" + "\n注意：Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
         logging.info(f"🐾 mp4/webm链接：{selected_post.url}")
     
     elif selected_post.url.endswith(".gifv"):
@@ -986,7 +986,7 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
         if is_valid_url(thumbnail_url):
             embed.set_image(url=thumbnail_url)
         mp4_url = selected_post.url.replace(".gifv", ".mp4")
-        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({mp4_url})" + "\n注意：有些 Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
+        embed.description = (embed.description or "") + f"\n[🐾 Click to watch / 点我看视频捏 🐾]({mp4_url})" + "\n注意：Reddit 视频在这里播放没有声音哦，可以点标题查看原贴>.<"
         logging.info(f"🐾 gifv转mp4链接：{mp4_url}")
 
     logging.info(f"🐾 随机抽取了 r/{subreddit_name} 的帖子：{title} ")
@@ -1021,7 +1021,7 @@ async def summary(interaction: discord.Interaction):
             "role":
             "system",
             "content":
-            "请你总结用户和GPT之间从头到尾的所有历史对话，用于后续对话的 context 使用。请使用第三人称、概括性语言，不要重复原话，不要加入评论或判断。重点总结用户的行为特征、情绪倾向、风格偏好和主要话题。\n"
+            "请你在1000字以内总结用户和GPT之间从头到尾的所有历史对话，用于后续对话的 context 使用。请使用第三人称、概括性语言，不要重复原话，不要加入评论或判断。重点总结用户的行为特征、情绪倾向、风格偏好和主要话题。\n"
             },
             {
             "role": "user",
