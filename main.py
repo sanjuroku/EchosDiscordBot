@@ -1125,7 +1125,7 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
     logging.info(f"🐾 随机抽取了 r/{subreddit_name} 的帖子：{title} ")
     
     await reddit.close()
-    await interaction.edit_original_response(embed=embed)
+    await interaction.edit_original_response(content=None, embed=embed)
 
 # ============================== #
 # summary 指令
