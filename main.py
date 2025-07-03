@@ -869,8 +869,7 @@ async def steam(interaction: Interaction,
 
     # 构建 Embed 
     embed = Embed(title=f"🎮 {display_zh_name} / {display_en_name}",
-                  description=desc,
-                  url=store_url)
+                  description=desc)
     embed.add_field(name=f"💰 当前价格 💰 {region_display}",
                     value=price_text,
                     inline=False)
