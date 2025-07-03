@@ -485,7 +485,6 @@ async def on_message(message):
 @bot.tree.command(name="ask", description="咋办")
 async def ask(interaction: discord.Interaction, prompt: str):
     await interaction.response.defer() 
-    await interaction.edit_original_response(content="💭 咋办思考中...")
     
     user_id = str(interaction.user.id)
     lock = get_user_lock(user_id)
@@ -637,7 +636,6 @@ TAROT_CARDS = [
 @bot.tree.command(name="tarot", description="抽一张塔罗牌解读你的困惑")
 async def tarot(interaction: discord.Interaction, wish_text: str):
     await interaction.response.defer()
-    await interaction.edit_original_response(content="💭 咋办抽取塔罗牌中...")
     
     user_id = str(interaction.user.id)
 
@@ -689,7 +687,6 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
 @bot.tree.command(name="fortune", description="占卜你的今日运势并解读")
 async def fortune(interaction: discord.Interaction):
     await interaction.response.defer()
-    await interaction.edit_original_response(content="💭 咋办占卜中...")
     
     user_id = str(interaction.user.id)
 
@@ -857,7 +854,6 @@ async def steam(interaction: Interaction,
                 game_name: str,
                 region: Optional[app_commands.Choice[str]] = None):
     await interaction.response.defer()
-    await interaction.edit_original_response(content="💭 咋办敲打Steam中...")
 
     region_code = region.value if region else "cn"
     region_display = region.name if region else "国区（人民币）"
@@ -1000,7 +996,6 @@ subreddit_choices = [
 @app_commands.choices(subreddit=subreddit_choices)
 async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands.Choice[str]] = None):
     await interaction.response.defer()
-    await interaction.edit_original_response(content="💭 咋办敲打Reddit中...")
     
     user_id = str(interaction.user.id)
 
@@ -1125,7 +1120,7 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
     logging.info(f"🐾 随机抽取了 r/{subreddit_name} 的帖子：{title} ")
     
     await reddit.close()
-    await interaction.edit_original_response(content=None, embed=embed)
+    await interaction.followup.send(embed=embed)
 
 # ============================== #
 # summary 指令
