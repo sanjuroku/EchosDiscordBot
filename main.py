@@ -15,7 +15,7 @@ from openai import OpenAI, OpenAIError, RateLimitError
 from openai.types.chat import ChatCompletionMessageParam
 from datetime import datetime
 from asyncio_throttle.throttler import Throttler
-from discord import Interaction, Embed, app_commands
+from discord import Interaction, Embed, app_commands, Color
 from typing import Optional
 from storage import DictStorageManager, ListStorageManager
 import aiohttp
@@ -771,6 +771,19 @@ async def steam_fuzzy_search(session, search_name, region_code, lang):
     # 3. 回退模糊的第一个
     return items[0]
 
+# 获取随机的embed颜色
+def get_embed_color(has_discount: bool):
+    if has_discount:
+        # 生成一个非黑色的随机 RGB 颜色（避免 Color.default 的灰色）
+        while True:
+            r = random.randint(50, 255)
+            g = random.randint(50, 255)
+            b = random.randint(50, 255)
+            # 避免接近默认灰（54, 57, 63）
+            if (r, g, b) != (54, 57, 63):
+                return Color.from_rgb(r, g, b)
+    else:
+        return Color.default()
 
 @bot.tree.command(name="steam", description="查询 Steam 游戏信息")
 @app_commands.describe(game_name="游戏名称", region="查询地区（默认国区）")
@@ -864,12 +877,18 @@ async def steam(interaction: Interaction,
             )
         else:
             price_text = f"价格：{final:.2f} {currency}"
+            
+        # 设置颜色
+        embed_color = get_embed_color(discount)
+        
     else:
         price_text = "免费或暂无价格信息"
+        embed_color = Color.default()
 
     # 构建 Embed 
     embed = Embed(title=f"🎮 {display_zh_name} / {display_en_name}",
-                  description=desc)
+                  description=desc,
+                  color=embed_color )
     embed.add_field(name=f"💰 当前价格 💰 {region_display}",
                     value=price_text,
                     inline=False)
