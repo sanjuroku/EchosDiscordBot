@@ -1344,7 +1344,7 @@ async def help_command(interaction: discord.Interaction):
            "🐣 `/help` - 列出所有可用指令\n"
            "🌈 `/buymeacoffee` - 如果你喜欢咋办，可以请作者喝杯咖啡哦 ☕️ :3c\n"
            "💌 有问题可以 @kuroniko0707 捏（没问题也可以）")
-    await interaction.response.send_message(msg)
+    await interaction.response.send_message(msg, ephemeral=True)
 
 
 # ============================== #
