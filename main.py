@@ -772,7 +772,7 @@ async def timezone(interaction: discord.Interaction):
         tz = pytz.timezone(tz_name)
         local_time = now_utc.astimezone(tz)
         formatted_time = local_time.strftime("%Y-%m-%d %H:%M:%S")
-        lines.append(f"{label}：`{formatted_time}`")
+        lines.append(f"{label} : `{formatted_time}`")
 
     time_text = "\n".join(lines)
 
