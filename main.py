@@ -1261,7 +1261,7 @@ async def reset(interaction: discord.Interaction):
             await interaction_.response.edit_message(content="❎ 已取消清空操作～", view=None)
 
     await interaction.response.send_message(
-        "⚠️ 你确定要清空所有历史记录吗？（对象范围：`/ask`,`/summary`,`/setrole`）此操作不可撤销哦 >.<", 
+        "⚠️ 你确定要清空所有历史记录吗？（清空对象范围：`/ask`,`/summary`,`/setrole`）\n⚠️ 此操作不可撤销哦 >.<", 
         view=ConfirmReset(), ephemeral=True
     )
     
