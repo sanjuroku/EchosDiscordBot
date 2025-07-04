@@ -569,7 +569,7 @@ async def ask(
 
         # 1. 所有情况下都加入 user 专属或默认 role
         custom_role = user_roles.get(user_id, "")
-        system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，请参考用户的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
+        system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[我的自定义角色设定如下，请参考我的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
         messages.append({"role": "system", "content": system_prompt})
 
         # 2. 如果有摘要，再加一条
@@ -712,7 +712,7 @@ async def tarot(interaction: discord.Interaction, wish_text: str):
 
     # 获取当前角色设定
     custom_role = user_roles.get(user_id, "")
-    system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，请参考用户的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
+    system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[我的自定义角色设定如下，请参考我的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
 
     prompt = f"""请扮演一个有趣可信的女巫。我的困惑是：{wish_text}。
     我抽到的塔罗牌是：{card_name}（{position}），请结合这张牌的含义（注意是{position}），详细地解读这张牌，对我的困惑进行详细的解读和建议。"""
@@ -762,9 +762,9 @@ async def fortune(interaction: discord.Interaction):
     position = random.choice(["正位", "逆位"])
 
     custom_role = user_roles.get(user_id, "")
-    system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[用户自定义角色设定如下，请参考用户的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
+    system_prompt = f"{DEFAULT_SYSTEM_PROMPT}\n\n[我的自定义角色设定如下，请参考我的角色设定：]\n{custom_role}" if custom_role else DEFAULT_SYSTEM_PROMPT
 
-    prompt = f"""你是一个风趣靠谱的女巫，请用轻松诙谐的语气，为我占卜今天的整体运势。可以从多种多样的方面综合评价。根据塔罗（用户抽到的塔罗牌是：{card_name}（{position}）、星座、八卦、抽签（类似日本神社抽签，吉凶随机）、随机事件、今日推荐的wordle起手词（随机抽取一个5个字母的英语单词）、今日的幸运食物、今日的幸运emoji、今日的幸运颜文字、今日的小小建议等自由组合方式生成一个完整的今日运势解析。回复格式自由。请保证绝对随机，可以很差，也可以很好。"""
+    prompt = f"""你是一个风趣靠谱的女巫，请用轻松诙谐的语气，为我占卜今天的整体运势。可以从多种多样的方面综合评价。根据塔罗（我抽到的塔罗牌是：{card_name}（{position}）、星座、八卦、抽签（类似日本神社抽签，吉凶随机）、随机事件、今日推荐的wordle起手词（随机抽取一个5个字母的英语单词）、今日的幸运食物、今日的幸运emoji、今日的幸运颜文字、今日的小小建议等自由组合方式生成一个完整的今日运势解析。回复格式自由。请保证绝对随机，可以很差，也可以很好。"""
 
     messages: list[ChatCompletionMessageParam] = [{
         "role": "system",
@@ -1419,12 +1419,12 @@ async def buymeacoffee(interaction: discord.Interaction):
 @bot.tree.command(name="help", description="列出所有可用指令")
 async def help_command(interaction: discord.Interaction):
     msg = ("可用指令列表：\n"
-           "💬 `/ask <问题>` - 咋办\n"
+           "💬 `/ask <问题> [可选：翻译目标语言]` - 咋办\n"
            "💭 `/choose <选项1> <选项2> ...` - 让咋办帮忙选选\n"
            "🔮 `/tarot <困惑>` - 抽一张塔罗牌解读你的困惑\n"
            "🧙‍♀️ `/fortune` - 占卜你的今日运势并解读\n"
            "🐾 `/aww <subreddit>` - 从Reddit上随机抽一只可爱动物\n"
-           "🎮 `/steam <游戏名称> [地区]` - 查询 Steam 游戏信息\n"
+           "🎮 `/steam <游戏名称> [可选：地区]` - 查询 Steam 游戏信息\n"
            "🕒 `/timezone` - 显示当前时间与全球多个时区的对照\n\n"
            "🙋‍♀️ `/setrole <风格设定>` - 设置专属的角色风格，或者希望bot记住的事情\n"
            "🙋‍♀️ `/rolecheck` - 查看你的角色设定\n"
