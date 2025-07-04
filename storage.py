@@ -17,6 +17,10 @@ class StorageManager:
         return self.default_data()
 
     def save(self):
+        directory = os.path.dirname(self.filename)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+
         with open(self.filename, "w", encoding="utf-8") as f:
             json.dump(self.data, f, ensure_ascii=False, indent=2)
 
