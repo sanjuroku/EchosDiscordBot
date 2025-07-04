@@ -1245,9 +1245,9 @@ async def reset(interaction: discord.Interaction):
 async def reset(interaction: discord.Interaction):
     class ConfirmReset(View):
         def __init__(self):
-            super().__init__(timeout=30)
+            super().__init__(timeout=300)
 
-        @discord.ui.button(label="✅ 确认清空", style=discord.ButtonStyle.danger)
+        @discord.ui.button(label="✅ 确定一定以及肯定", style=discord.ButtonStyle.danger)
         async def confirm(self, interaction_: discord.Interaction, button: Button):
             user_id = str(interaction_.user.id)
             history_storage.delete(user_id)
@@ -1256,7 +1256,7 @@ async def reset(interaction: discord.Interaction):
             await interaction_.response.edit_message(content="✅ 历史记录已清空！", view=None)
             logging.info(f"✅ 用户 {user_id} 清空了所有历史")
 
-        @discord.ui.button(label="❌ 取消", style=discord.ButtonStyle.secondary)
+        @discord.ui.button(label="❌ 取消操作", style=discord.ButtonStyle.secondary)
         async def cancel(self, interaction_: discord.Interaction, button: Button):
             await interaction_.response.edit_message(content="❎ 已取消清空操作～", view=None)
 
