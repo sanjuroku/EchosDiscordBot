@@ -543,6 +543,7 @@ async def ask(
                     max_tokens=1000,
                     timeout=60,
                 )
+                logging.info(f"✅ 模型调用成功：{response.model}")
                 reply = response.choices[0].message.content or "❌ GPT 没有返回任何内容哦 >.<"
                 await interaction.followup.send(reply)
                 
