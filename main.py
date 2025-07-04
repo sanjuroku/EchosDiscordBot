@@ -1253,15 +1253,15 @@ async def reset(interaction: discord.Interaction):
             history_storage.delete(user_id)
             summary_storage.delete(user_id)
             role_storage.delete(user_id)
-            await interaction_.response.edit_message(content="✅ 历史记录已清空！", view=None)
+            await interaction_.response.edit_message(content="✅ 历史记录已清空 >.<", view=None)
             logging.info(f"✅ 用户 {user_id} 清空了所有历史")
 
         @discord.ui.button(label="❌ 取消", style=discord.ButtonStyle.secondary)
         async def cancel(self, interaction_: discord.Interaction, button: Button):
-            await interaction_.response.edit_message(content="❎ 已取消清空操作～", view=None)
+            await interaction_.response.edit_message(content="❎ Phew, 已取消清空操作 >.<", view=None)
 
     await interaction.response.send_message(
-        "⚠️ 你确定要清空所有历史记录吗？\n``` 清空对象范围：\n- /ask 的历史对话\n- /summary 以及自动摘要的历史内容\n- /setrole 存储的角色设定 ```\n⚠️ 此操作不可撤销哦 >.<", 
+        "⚠️ 你确定要清空所有历史记录吗？\n```清空对象范围：\n- /ask 的历史对话\n- /summary 以及自动摘要的历史内容\n- /setrole 存储的角色设定 ```\n⚠️ 此操作不可撤销哦 >.<", 
         view=ConfirmReset(), ephemeral=True
     )
     
