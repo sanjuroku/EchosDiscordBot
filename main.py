@@ -16,6 +16,7 @@ from openai.types.chat import ChatCompletionMessageParam
 from datetime import datetime
 from asyncio_throttle.throttler import Throttler
 from discord import Interaction, Embed, app_commands, Color
+from discord.ui import View, Button
 from typing import Optional
 from storage import DictStorageManager, ListStorageManager
 import aiohttp
@@ -1218,9 +1219,9 @@ async def summarycheck(interaction: discord.Interaction):
 
 
 # ============================== #
-# rest 指令
+# reset 指令
 # ============================== #
-@bot.tree.command(name="reset", description="重置清空所有历史")
+""" @bot.tree.command(name="reset", description="重置清空所有历史")
 async def reset(interaction: discord.Interaction):
     user_id = str(interaction.user.id)
     
@@ -1238,7 +1239,31 @@ async def reset(interaction: discord.Interaction):
     
     await interaction.response.send_message("✅ 你的历史已清空～可以开始新的提问啦！", ephemeral=True)
     
-    logging.info(f"✅ 用户 {user_id} 重置清空了所有历史")
+    logging.info(f"✅ 用户 {user_id} 重置清空了所有历史") """
+
+@bot.tree.command(name="reset", description="重置清空所有历史")
+async def reset(interaction: discord.Interaction):
+    class ConfirmReset(View):
+        def __init__(self):
+            super().__init__(timeout=30)
+
+        @discord.ui.button(label="✅ 确认清空", style=discord.ButtonStyle.danger)
+        async def confirm(self, interaction_: discord.Interaction, button: Button):
+            user_id = str(interaction_.user.id)
+            history_storage.delete(user_id)
+            summary_storage.delete(user_id)
+            role_storage.delete(user_id)
+            await interaction_.response.edit_message(content="✅ 历史记录已清空！", view=None)
+            logging.info(f"✅ 用户 {user_id} 清空了所有历史")
+
+        @discord.ui.button(label="❌ 取消", style=discord.ButtonStyle.secondary)
+        async def cancel(self, interaction_: discord.Interaction, button: Button):
+            await interaction_.response.edit_message(content="❎ 已取消清空操作～", view=None)
+
+    await interaction.response.send_message(
+        "⚠️ 你确定要清空所有历史记录吗？此操作不可撤销哦 >.<", 
+        view=ConfirmReset(), ephemeral=True
+    )
     
 
 # ============================== #
