@@ -122,6 +122,12 @@ def get_user_lock(user_id: str) -> asyncio.Lock:
         user_locks[user_id] = asyncio.Lock()
     return user_locks[user_id]
 
+reddit_locks: dict[str, asyncio.Lock] = {}
+def get_reddit_lock(subreddit: str) -> asyncio.Lock:
+    if subreddit not in reddit_locks:
+        reddit_locks[subreddit] = asyncio.Lock()
+    return reddit_locks[subreddit]
+
 
 # ============================== #
 # 历史记录持久化函数
@@ -1035,39 +1041,41 @@ async def aww(interaction: discord.Interaction, subreddit: Optional[app_commands
         posts = cached
         
     else:
-        posts = []
-        
-        try:
-            # 获取前 50 条热门帖子，包含图片和视频
-            subreddit_obj = await reddit.subreddit(subreddit_name)
-            async for post in subreddit_obj.hot(limit=50):
-                if post.stickied:
-                    continue
-
-                # 图片链接
-                if post.url.endswith((".jpg", ".jpeg", ".png", ".gif")):
-                    posts.append(simplify_post(post))
-
-                # Reddit 原生视频（非外链）
-                elif post.is_video and isinstance(post.media, dict) and "reddit_video" in post.media:
-                    posts.append(simplify_post(post))
-
-                # gifv（Imgur 或 Gfycat）
-                elif post.url.endswith((".mp4", ".webm", ".gifv")):
-                    posts.append(simplify_post(post))
-
-            logging.info(f"🔍 从 r/{subreddit_name} 获取 {len(posts)} 条图片/视频帖子")
-            set_cache(subreddit_name, posts)  # 成功后设置缓存
+        lock = get_reddit_lock(subreddit_name)
+        async with lock: # 添加异步锁，避免并发请求同一 subreddit
+            posts = []
             
-        except asyncio.TimeoutError:
-            await interaction.followup.send(f"❌ 访问 r/{subreddit_name} 超时了，请稍后再试！>.<")
-            logging.warning(f"❌ 访问 Reddit 超时：r/{subreddit_name}")
-            return
-        
-        except Exception as e:
-            await interaction.followup.send("❌ 发生未知错误，请稍后再试 >.<")
-            logging.exception("❌ Reddit 请求失败")
-            return
+            try:
+                # 获取前 50 条热门帖子，包含图片和视频
+                subreddit_obj = await reddit.subreddit(subreddit_name)
+                async for post in subreddit_obj.hot(limit=50):
+                    if post.stickied:
+                        continue
+
+                    # 图片链接
+                    if post.url.endswith((".jpg", ".jpeg", ".png", ".gif")):
+                        posts.append(simplify_post(post))
+
+                    # Reddit 原生视频（非外链）
+                    elif post.is_video and isinstance(post.media, dict) and "reddit_video" in post.media:
+                        posts.append(simplify_post(post))
+
+                    # gifv（Imgur 或 Gfycat）
+                    elif post.url.endswith((".mp4", ".webm", ".gifv")):
+                        posts.append(simplify_post(post))
+
+                logging.info(f"🔍 从 r/{subreddit_name} 获取 {len(posts)} 条图片/视频帖子")
+                set_cache(subreddit_name, posts)  # 成功后设置缓存
+                
+            except asyncio.TimeoutError:
+                await interaction.followup.send(f"❌ 访问 r/{subreddit_name} 超时了，请稍后再试！>.<")
+                logging.warning(f"❌ 访问 Reddit 超时：r/{subreddit_name}")
+                return
+            
+            except Exception as e:
+                await interaction.followup.send("❌ 发生未知错误，请稍后再试 >.<")
+                logging.exception("❌ Reddit 请求失败")
+                return
     
     if not posts:
         await interaction.followup.send("❌ 没找到合适的结果捏TT，请稍后再试 >.<")
@@ -1221,26 +1229,6 @@ async def summarycheck(interaction: discord.Interaction):
 # ============================== #
 # reset 指令
 # ============================== #
-""" @bot.tree.command(name="reset", description="重置清空所有历史")
-async def reset(interaction: discord.Interaction):
-    user_id = str(interaction.user.id)
-    
-    #user_histories.pop(user_id, None)
-    #user_summaries.pop(user_id, None)
-    #user_roles.pop(user_id, None)
-    #save_histories()
-    #save_summaries()
-    #save_roles()
-    
-    # 用StorageManager
-    history_storage.delete(user_id)
-    summary_storage.delete(user_id)
-    role_storage.delete(user_id)
-    
-    await interaction.response.send_message("✅ 你的历史已清空～可以开始新的提问啦！", ephemeral=True)
-    
-    logging.info(f"✅ 用户 {user_id} 重置清空了所有历史") """
-
 @bot.tree.command(name="reset", description="重置清空所有历史")
 async def reset(interaction: discord.Interaction):
     class ConfirmReset(View):
