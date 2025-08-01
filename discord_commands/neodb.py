@@ -23,7 +23,7 @@ media_type_choices = [
     app_commands.Choice(name="音乐 Album", value="album"),
 ]
 
-NEODB_SEARCH_API = "https://neodb.social/api/v1/catalog/search"
+NEODB_SEARCH_API = "https://neodb.social/api/catalog/search"
 
 async def neodb_search(title: str, media_type: Optional[str] = None):
     
