@@ -94,7 +94,7 @@ def build_neodb_embed(item) -> Embed:
             ("ISBN", item.get("isbn", "未知"), True),
             ("定价", item.get("price", "未知"), True),
             ("评分", f"{item.get('rating', 'N/A')}（{item.get('rating_count', 0)}人评价）", True),
-            ("标签", ", ".join(item.get("tags", [])[:6]) + "..." if len(item.get("tags", [])) > 6 else ", ".join(item.get("tags", [])) or "暂无", False),
+            ("标签", ", ".join(item.get("tags", [])) or "暂无", False),
         ]
     elif media_type == "album":
         fields = [
@@ -105,7 +105,7 @@ def build_neodb_embed(item) -> Embed:
             ("曲目数", f"{len(item.get('track_list', '').splitlines())} 首" if item.get("track_list") else "未知", True),
             ("曲目列表", "\n".join(item.get("track_list", "").splitlines()[:5]) + "\n..." if item.get("track_list") and len(item.get("track_list").splitlines()) > 5 else item.get("track_list", "暂无") or "暂无", False),
             ("评分", f"{item.get('rating', 'N/A')}（{item.get('rating_count', 0)}人评价）", True),
-            ("标签", ", ".join(item.get("tags", [])[:6]) + "..." if len(item.get("tags", [])) > 6 else ", ".join(item.get("tags", [])) or "暂无", False),
+            ("标签", ", ".join(item.get("tags", [])) or "暂无", False),
             ("条形码", item.get("barcode", "无"), True),
         ]
     elif media_type == "tv":
@@ -122,7 +122,7 @@ def build_neodb_embed(item) -> Embed:
             ("IMDb", f"[{item['imdb']}](https://www.imdb.com/title/{item['imdb']})" if item.get("imdb") else "无", True),
             ("官网", f"[点击访问]({item['site']})" if item.get("site") else "无", True),
             ("评分", f"{item.get('rating', 'N/A')}（{item.get('rating_count', 0)}人评价）", True),
-            ("标签", ", ".join(item.get("tags", [])[:6]) + "..." if len(item.get("tags", [])) > 6 else ", ".join(item.get("tags", [])) or "暂无", False),
+            ("标签", ", ".join(item.get("tags", [])) or "暂无", False),
         ]
     else:
         fields = [
@@ -133,7 +133,7 @@ def build_neodb_embed(item) -> Embed:
             ("编剧", ", ".join(item.get("playwright", [])) or "未知", True),
             ("演员", ", ".join(item.get("actor", [])[:5]) + "..." if len(item.get("actor", [])) > 5 else ", ".join(item.get("actor", [])) or "未知", False),
             ("评分", f"{item.get('rating', 'N/A')}（{item.get('rating_count', 0)}人评价）", True),
-            ("标签", ", ".join(item.get("tags", [])[:6]) + "..." if len(item.get("tags", [])) > 6 else ", ".join(item.get("tags", [])) or "暂无", False),
+            ("标签", ", ".join(item.get("tags", [])) or "暂无", False),
             ("IMDb", f"[{item['imdb']}](https://www.imdb.com/title/{item['imdb']})" if item.get("imdb") else "无", True),
         ]
 
@@ -143,7 +143,7 @@ def build_neodb_embed(item) -> Embed:
         None
     )
     if douban_url:
-        fields.append(("豆瓣链接", f"[点击查看]({douban_url})", False))
+        fields.append(("豆瓣链接", f"{douban_url}", False))
 
     for name, value, inline in fields:
         if value and value != "未知":
