@@ -103,7 +103,7 @@ def build_neodb_embed(item) -> Embed:
             ("厂牌", ", ".join(item.get("company", [])) or "未知", True),
             ("发行日期", item.get("release_date", "未知"), True),
             ("曲目数", f"{len(item.get('track_list', '').splitlines())} 首" if item.get("track_list") else "未知", True),
-            ("曲目列表", "\n".join(item.get("track_list", "").splitlines()[:5]) + "\n..." if item.get("track_list") and len(item.get("track_list").splitlines()) > 5 else item.get("track_list", "暂无") or "暂无", False),
+            ("曲目列表", "\n".join(item.get("track_list", "").splitlines()) or "暂无", False),
             ("评分", f"{item.get('rating', 'N/A')}（{item.get('rating_count', 0)}人评价）", True),
             ("标签", ", ".join(item.get("tags", [])) or "暂无", False),
         ]
