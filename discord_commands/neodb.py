@@ -1,8 +1,10 @@
 import aiohttp
 import logging
 import os
+import discord
 from discord.ext import commands
-from discord import Interaction, Embed, app_commands, Color
+from discord import Interaction, Embed, app_commands, SelectOption
+from discord.ui import Select, View
 from typing import Optional
 from utils.embed import get_random_embed_color
 
@@ -15,6 +17,33 @@ NEODB_ACCESS_TOKEN = os.environ.get("NEODB_ACCESS_TOKEN") or ""
 if not NEODB_ACCESS_TOKEN:
     raise ValueError(
         "环境变量未设置，请设置 NEODB_ACCESS_TOKEN")
+
+class NeoDBSelect(Select):
+    def __init__(self, results: list):
+        options = []
+        for i, item in enumerate(results[:25]):  # Discord 限制最多 25 项
+            title = item.get("title") or item.get("display_title") or f"结果{i+1}"
+            options.append(SelectOption(label=title[:100], value=str(i)))
+
+        super().__init__(
+            placeholder="选择其他条目查看详情",
+            min_values=1,
+            max_values=1,
+            options=options
+        )
+        self.results = results
+
+    async def callback(self, interaction: Interaction):
+        index = int(self.values[0])
+        item = self.results[index]
+        embed = build_neodb_embed(item)
+        await interaction.response.edit_message(embed=embed, view=self.view)
+
+
+class NeoDBView(View):
+    def __init__(self, results: list):
+        super().__init__(timeout=300)
+        self.add_item(NeoDBSelect(results))
 
 media_type_choices = [
     app_commands.Choice(name="图书 Book", value="book"),
@@ -178,7 +207,13 @@ def setup(bot: commands.Bot) -> None:
 
             top_result = results[0]
             embed = build_neodb_embed(top_result)
-            await interaction.followup.send(embed=embed)
+            
+            view = None
+            if len(results) > 1:
+                view = NeoDBView(results)
+                await interaction.followup.send(embed=embed, view=view)
+            else:
+                await interaction.followup.send(embed=embed)
 
         except Exception as e:
             logging.exception("❌ NeoDB 查询失败：")
