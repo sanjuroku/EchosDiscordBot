@@ -87,6 +87,7 @@ async def neodb_search(title: str, media_type: Optional[str] = None):
             results = data.get("data", [])
             
             # 3. 存入缓存
+            logging.info(f"查询成功，正在缓存 neodb 结果：{query_key}")
             set_neodb_cache(query_key, results)
             
             return results
