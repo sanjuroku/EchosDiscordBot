@@ -1,17 +1,43 @@
 import time
+import logging
+from utils.save_and_load import reddit_cache_storage, reddit_sent_cache_storage, CACHE_DURATION
 
-from utils.save_and_load import save_reddit_cache
-
+# 内存缓存结构：{subreddit_name: {"data": [...], "timestamp": float}}
+reddit_cache = {}
 # 设置用户看过的reddit帖子缓存
 reddit_sent_cache = {}  # 格式：{user_id: set(url1, url2, ...)}
 MAX_REDDIT_HISTORY = 20
 
 # ============================== #
+# Reddit 缓存持久化函数
+# ============================== #
+def save_reddit_cache():
+    now = time.time()
+    valid_cache = {
+        key: val
+        for key, val in reddit_cache.items()
+        if now - val["timestamp"] < CACHE_DURATION
+    }
+    logging.info(f"💾 正在保存 Reddit 缓存，共 {len(valid_cache)} 条")
+    reddit_cache_storage.set("cache", valid_cache)
+
+def save_reddit_sent_cache():
+    # 将 set 转为 list 存储
+    serializable_cache = {uid: list(urls) for uid, urls in reddit_sent_cache.items()}
+    reddit_sent_cache_storage.set("sent_cache", serializable_cache)
+
+def load_reddit_cache():
+    global reddit_cache
+    reddit_cache = reddit_cache_storage.get("cache", {})
+
+def load_reddit_sent_cache():
+    global reddit_sent_cache
+    raw = reddit_sent_cache_storage.get("sent_cache", {})
+    reddit_sent_cache = {uid: set(urls) for uid, urls in raw.items()}
+
+# ============================== #
 # Reddit 相关缓存与函数
 # ============================== #
-# 内存缓存结构：{subreddit_name: {"data": [...], "timestamp": float}}
-reddit_cache = {}
-CACHE_DURATION = 1800 # 缓存持续时间，单位为秒（30分钟）
 
 # 获取reddit帖子
 def get_cached_posts(subreddit_name: str):

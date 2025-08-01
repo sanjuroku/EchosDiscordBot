@@ -9,7 +9,10 @@ from discord.ext import commands
 import discord_commands
 import events
 from events.trigger_events import load_triggers_off
-from utils.save_and_load import load_histories, load_summaries, load_roles, load_reddit_cache, load_reddit_sent_cache, load_neodb_cache
+from utils.save_and_load import load_histories, load_summaries, load_roles
+from utils.neodb import load_neodb_cache
+from utils.reddit import load_reddit_cache, load_reddit_sent_cache
+
 
 # 初始化写入日志
 logging.basicConfig(

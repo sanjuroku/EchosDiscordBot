@@ -10,8 +10,7 @@ from discord.ext import commands
 from typing import Optional
 from utils.locks import get_reddit_lock
 from utils.embed import get_random_embed_color
-from utils.reddit import get_cached_posts, set_cache, is_valid_url, simplify_post, reddit_sent_cache, MAX_REDDIT_HISTORY
-from utils.save_and_load import save_reddit_sent_cache
+from utils.reddit import get_cached_posts, set_cache, is_valid_url, simplify_post, reddit_sent_cache, save_reddit_sent_cache, MAX_REDDIT_HISTORY
 
 # ============================== #
 # /aww 指令
