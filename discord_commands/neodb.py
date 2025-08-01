@@ -51,8 +51,8 @@ def build_neodb_embed(item) -> Embed:
     title = item.get("title") or "未知标题"
     original_title = item.get("orig_title")
     subtitle = item.get("subtitle")
-    description = item.get("summary") or "暂无简介"
-    cover_url = item.get("cover_image")
+    description = item.get("description") or "暂无简介"
+    cover_url = item.get("cover_image_url")
     # 拼接完整 URL
     relative_url = item.get("url") or item.get("id", "")
     if relative_url.startswith("/"):
@@ -80,10 +80,6 @@ def build_neodb_embed(item) -> Embed:
         ("发布日期", item.get("date_published", "未知"), True),
         ("NeoDB链接", f"[点击查看]({url})", False),
     ]
-
-    creators = item.get("author") or item.get("creator")
-    if creators:
-        fields.insert(1, ("作者/导演", ", ".join(creators), True))
 
     for name, value, inline in fields:
         if value and value != "未知":
