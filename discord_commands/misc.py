@@ -31,7 +31,7 @@ def setup_help(bot: commands.Bot) -> None:
             "🧙‍♀️ `/fortune` - 占卜你的今日运势并解读\n"
             "🐾 `/aww <subreddit>` - 从Reddit上随机抽一只可爱动物\n"
             "🎮 `/steam <游戏名称> [可选：地区]` - 查询 Steam 游戏信息\n"
-            "🌠 `/neodb <名称> [可选：媒体类型]` - 查询书影音信息\n"
+            "🌠 `/neodb <名称> [可选：媒体类型]` - 查询书影音等媒体信息\n"
             "🕒 `/timezone` - 显示当前时间与全球多个时区的对照\n\n"
             "🙋‍♀️ `/setrole <风格设定>` - 设置专属的角色风格，或者希望bot记住的事情\n"
             "🙋‍♀️ `/rolecheck` - 查看你的角色设定\n"
