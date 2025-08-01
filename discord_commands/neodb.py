@@ -51,34 +51,44 @@ def build_neodb_embed(item) -> Embed:
     title = item.get("title") or "未知标题"
     original_title = item.get("orig_title")
     subtitle = item.get("subtitle")
-    description = item.get("description") or "暂无简介"
-    cover_url = item.get("cover_image_url")
-    # 拼接完整 URL
-    relative_url = item.get("url") or item.get("id", "")
-    if relative_url.startswith("/"):
-        url = f"https://neodb.social{relative_url}"
-    else:
-        url = f"https://neodb.social/{relative_url}" if not relative_url.startswith("http") else relative_url
-        
     # 标题组合
     title_display = f"{title}"
     if subtitle:
         title_display += f"：{subtitle}"
     if original_title and original_title != title:
         title_display += f" / {original_title}"
+        
+    # 描述
+    description = item.get("description") or "暂无简介"
+    
+    # 拼接完整 URL
+    relative_url = item.get("url") or item.get("id", "")
+    if relative_url.startswith("/"):
+        url = f"https://neodb.social{relative_url}"
+    else:
+        url = f"https://neodb.social/{relative_url}" if not relative_url.startswith("http") else relative_url
 
+    # 创建 Embed
     embed = Embed(title=f"🌠 {title_display}",
                   description=description[:1000],
                   url=url,
                   color=get_random_embed_color())
     
+    # 封面
+    cover_url = item.get("cover_image_url")
     if cover_url:
         embed.set_image(url=cover_url)
 
     fields = [
-        ("类型", item.get("type", "未知"), True),
-        ("发布日期", item.get("date_published", "未知"), True),
-        ("NeoDB链接", f"[点击查看]({url})", False),
+        ("类型", item.get("category", "未知"), True),
+        ("年份", str(item.get("year", "未知")), True),
+        ("时长", item.get("duration", "未知"), True),
+        ("导演", ", ".join(item.get("director", [])) or "未知", True),
+        ("编剧", ", ".join(item.get("playwright", [])) or "未知", True),
+        ("演员", ", ".join(item.get("actor", [])[:5]) + "..." if len(item.get("actor", [])) > 5 else ", ".join(item.get("actor", [])) or "未知", False),
+        ("评分", f"{item.get('rating', 'N/A')}（{item.get('rating_count', 0)}人评价）", True),
+        ("标签", ", ".join(item.get("tags", [])[:6]) + "..." if len(item.get("tags", [])) > 6 else ", ".join(item.get("tags", [])) or "暂无", False),
+        ("IMDb", f"[{item['imdb']}](https://www.imdb.com/title/{item['imdb']})" if item.get("imdb") else "无", True),
     ]
 
     for name, value, inline in fields:
