@@ -82,6 +82,6 @@ def setup_summarycheck(bot: commands.Bot) -> None:
 
         if summary_text:
             await interaction.response.send_message(
-                f"📄 这是你的对话摘要：\n\n```{summary_text}```", ephemeral=True)
+                f"📄 这是你的对话摘要：\n```{summary_text}```", ephemeral=True)
         else:
             await interaction.response.send_message("ℹ️ 当前还没有摘要哦！", ephemeral=True)

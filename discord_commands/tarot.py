@@ -60,7 +60,7 @@ def setup(bot: commands.Bot) -> None:
             f"我抽到的塔罗牌如下（请注意正逆位）：\n{card_text_for_prompt}\n\n"
             f"请结合这些牌的牌义进行解读。\n"
             f"- 如果是三张牌，请从过去/现在/未来的角度解读；\n"
-            f"- 如果是五张牌，请综合分析；\n"
+            f"- 如果是五张牌，请根据疑惑选取牌阵综合分析；\n"
             f"- 如果只有一张，请专注该牌的象征意义并对我的困惑给出详细回应。"
         )
 
@@ -89,12 +89,12 @@ def setup(bot: commands.Bot) -> None:
                 reply = choices[0].message.content.strip()
 
             await interaction.followup.send(f"💭 你的困惑是：**{wish_text}**\n"
-                                            f"🔮 你抽到的牌是：**{card_text_for_prompt}**\n\n"
+                                            f"🔮 你抽到的牌是：\n**{card_text_for_prompt}**\n\n"
                                             f"{reply}")
             
             logging.info(f"用户: {user_id} 占卜塔罗牌")
             logging.info(f"困惑: {wish_text}")
-            logging.info(f"抽取的塔罗牌: {card_text_for_prompt})")
+            logging.info(f"抽取的塔罗牌: {card_text_for_prompt}")
 
         except Exception as e:
             await interaction.followup.send(f"❌ 出错了：{str(e)}", ephemeral=True)

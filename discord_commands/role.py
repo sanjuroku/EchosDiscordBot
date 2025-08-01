@@ -32,7 +32,7 @@ def setup_rolecheck(bot: commands.Bot) -> None:
         user_id = str(interaction.user.id)
         prompt = user_roles.get(user_id)
         if prompt:
-            await interaction.response.send_message(f"📝 你的当前角色设定是：\n\n```{prompt}```", ephemeral=True)
+            await interaction.response.send_message(f"📝 你的当前角色设定是：\n```{prompt}```", ephemeral=True)
         else:
             await interaction.response.send_message("ℹ️ 你还没有设置自定义角色设定。可以通过`/setrole`进行角色设置捏！", ephemeral=True)
 
