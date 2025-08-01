@@ -48,20 +48,19 @@ async def neodb_search(title: str, media_type: Optional[str] = None):
             return data.get("data", [])
 
 def build_neodb_embed(item) -> Embed:
-    attributes = item.get("attributes", {})
-    title = attributes.get("title") or "未知标题"
-    original_title = attributes.get("orig_title")
-    subtitle = attributes.get("subtitle")
-    description = attributes.get("summary") or "暂无简介"
-    cover_url = attributes.get("cover_image")
-    # 强制拼接完整 URL（避免返回的 "url" 是相对路径）
+    title = item.get("title") or "未知标题"
+    original_title = item.get("orig_title")
+    subtitle = item.get("subtitle")
+    description = item.get("summary") or "暂无简介"
+    cover_url = item.get("cover_image")
+    # 拼接完整 URL
     relative_url = item.get("url") or item.get("id", "")
     if relative_url.startswith("/"):
         url = f"https://neodb.social{relative_url}"
     else:
-        url = relative_url  # 已经是完整 URL
-
-
+        url = f"https://neodb.social/{relative_url}" if not relative_url.startswith("http") else relative_url
+        
+    # 标题组合
     title_display = f"{title}"
     if subtitle:
         title_display += f"：{subtitle}"
@@ -78,11 +77,11 @@ def build_neodb_embed(item) -> Embed:
 
     fields = [
         ("类型", item.get("type", "未知"), True),
-        ("发布日期", attributes.get("date_published", "未知"), True),
+        ("发布日期", item.get("date_published", "未知"), True),
         ("NeoDB链接", f"[点击查看]({url})", False),
     ]
 
-    creators = attributes.get("creator")
+    creators = item.get("author") or item.get("creator")
     if creators:
         fields.insert(1, ("作者/导演", ", ".join(creators), True))
 
