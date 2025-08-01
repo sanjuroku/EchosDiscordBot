@@ -1,4 +1,4 @@
-from discord_commands import ask, change_status, choose, role, tarot, fortune, steam, timezone, aww, summary, reset, misc
+from discord_commands import ask, change_status, choose, role, tarot, fortune, steam, neodb, timezone, aww, summary, reset, misc
 
 __all__ = ["setup_all"]
 
@@ -12,6 +12,7 @@ def setup_all(bot):
     fortune.setup(bot)
     timezone.setup(bot)
     steam.setup(bot)
+    neodb.setup(bot)
     aww.setup(bot)
     summary.setup_summary(bot)
     summary.setup_summarycheck(bot)
