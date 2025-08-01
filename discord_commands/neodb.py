@@ -90,7 +90,6 @@ async def neodb_search(title: str, media_type: Optional[str] = None):
             # 3. 存入缓存
             try:
                 logging.info(f"查询成功，正在缓存 neodb 结果：{query_key}")
-                logging.info(f"查询结果数量: {len(results)}")
                 set_neodb_cache(query_key, results)
             except Exception as e:
                 logging.error(f"❌ 缓存保存失败：{e}")
