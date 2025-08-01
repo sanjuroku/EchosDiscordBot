@@ -90,6 +90,7 @@ def load_reddit_sent_cache():
 # ============================== #
 # 保存缓存
 def save_neodb_cache():
+    global neodb_cache
     now = time.time()
     valid_cache = {
         key: val
