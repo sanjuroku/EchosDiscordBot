@@ -26,6 +26,7 @@ media_type_choices = [
 NEODB_SEARCH_API = "https://neodb.social/api/v1/search"
 
 async def neodb_search(title: str, media_type: Optional[str] = None):
+    
     params = {"q": title}
     if media_type:
         params["type"] = media_type
@@ -36,8 +37,13 @@ async def neodb_search(title: str, media_type: Optional[str] = None):
     }
     async with aiohttp.ClientSession() as session:
         async with session.get(NEODB_SEARCH_API, params=params, headers=headers) as resp:
+            text = await resp.text()
+            logging.info(f"📡 HTTP 状态码: {resp.status}")
+            logging.info(f"📝 返回内容: {text}")
+
             if resp.status != 200:
-                raise Exception(f"NeoDB API 请求失败，状态码: {resp.status}")
+                raise Exception(f"NeoDB API 请求失败，状态码: {resp.status}，内容: {text}")
+
             data = await resp.json()
             return data.get("data", [])
 
