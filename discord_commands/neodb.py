@@ -92,8 +92,15 @@ def setup(bot: commands.Bot) -> None:
                     media_type: Optional[app_commands.Choice[str]] = None):
 
         await interaction.response.defer()
+        
+        logging.info(f"用户 {interaction.user.id} 查询 NeoDB: {title} ({media_type.value if media_type else '全部类型'})")
+        
         try:
             results = await neodb_search(title, media_type.value if media_type else None)
+            
+            logging.info(f"NeoDB 查询结果数量: {len(results)}")
+            logging.info(f"查询关键词: {title}, 媒体类型: {media_type.value if media_type else '全部类型'}")
+            
             if not results:
                 await interaction.followup.send("❌ 未找到相关结果，请检查关键词是否正确。", ephemeral=True)
                 return
