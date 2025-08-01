@@ -29,7 +29,7 @@ async def neodb_search(title: str, media_type: Optional[str] = None):
     
     params = {"query": title}
     if media_type:
-        params["type"] = media_type
+        params["category"] = media_type
 
     headers = {
         "Accept": "application/json",
