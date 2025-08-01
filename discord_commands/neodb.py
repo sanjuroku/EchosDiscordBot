@@ -39,7 +39,7 @@ async def neodb_search(title: str, media_type: Optional[str] = None):
         async with session.get(NEODB_SEARCH_API, params=params, headers=headers) as resp:
             text = await resp.text()
             logging.info(f"📡 HTTP 状态码: {resp.status}")
-            logging.info(f"📝 返回内容: {text}")
+            logging.info(f"📝 返回内容: {resp}")
 
             if resp.status != 200:
                 raise Exception(f"NeoDB API 请求失败，状态码: {resp.status}，内容: {text}")
@@ -52,8 +52,8 @@ def build_neodb_embed(item) -> Embed:
     title = attributes.get("title") or "未知标题"
     original_title = attributes.get("orig_title")
     subtitle = attributes.get("subtitle")
-    description = attributes.get("description") or "暂无简介"
-    cover_url = attributes.get("cover_image_url")
+    description = attributes.get("summary") or "暂无简介"
+    cover_url = attributes.get("cover_image")
     # 强制拼接完整 URL（避免返回的 "url" 是相对路径）
     relative_url = item.get("url") or item.get("id", "")
     if relative_url.startswith("/"):
