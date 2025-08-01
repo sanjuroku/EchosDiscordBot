@@ -109,10 +109,11 @@ def build_neodb_embed(item) -> Embed:
         ]
     elif media_type == "tv":
         fields = [
+            ("类型", media_type, True),
             ("导演", ", ".join(item.get("director", [])) or "未知", True),
             ("编剧", ", ".join(item.get("playwright", [])) or "未知", True),
             ("主演", ", ".join(item.get("actor", [])[:5]) + "..." if len(item.get("actor", [])) > 5 else ", ".join(item.get("actor", [])) or "未知", False),
-            ("类型", ", ".join(item.get("genre", [])) or "未知", True),
+            ("分类", ", ".join(item.get("genre", [])) or "未知", True),
             ("地区", ", ".join(item.get("area", [])) or "未知", True),
             ("语言", ", ".join(item.get("language", [])) or "未知", True),
             ("首播年份", str(item.get("year", "未知")), True),
