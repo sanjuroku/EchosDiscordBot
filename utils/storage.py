@@ -62,3 +62,23 @@ class ListStorageManager(StorageManager):
     def clear(self):
         self.data.clear()
         self.save()
+
+# ============================== #
+# 全局变量与常量定义
+# ============================== #
+CONFIG_DIR = "config"
+SAVEDATA_DIR = "savedata"
+
+# 使用StorageManager封装
+history_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "histories.json"))
+summary_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "summaries.json"))
+role_storage = DictStorageManager(os.path.join(CONFIG_DIR, "roles.json"))
+trigger_storage = ListStorageManager(os.path.join(CONFIG_DIR, "disabled_triggers.json"))
+guild_list_storage = DictStorageManager(os.path.join(CONFIG_DIR, "guilds.json"))
+status_storage = DictStorageManager(os.path.join(CONFIG_DIR, "status_config.json"))
+reddit_cache_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "reddit_cache.json"))
+reddit_sent_cache_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "reddit_sent_cache.json"))
+
+user_histories = history_storage.data  # 存储用户对话历史
+user_summaries = summary_storage.data  # 存储用户对话摘要
+user_roles = role_storage.data  # 存储用户角色设定
