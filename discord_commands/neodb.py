@@ -50,10 +50,10 @@ async def neodb_search(title: str, media_type: Optional[str] = None):
 def build_neodb_embed(item) -> Embed:
     attributes = item.get("attributes", {})
     title = attributes.get("title") or "未知标题"
-    original_title = attributes.get("original_title")
-    subtitle = attributes.get("sub_title")
-    description = attributes.get("summary") or "暂无简介"
-    cover_url = attributes.get("cover_image")
+    original_title = attributes.get("orig_title")
+    subtitle = attributes.get("subtitle")
+    description = attributes.get("description") or "暂无简介"
+    cover_url = attributes.get("cover_image_url")
     # 强制拼接完整 URL（避免返回的 "url" 是相对路径）
     relative_url = item.get("url") or item.get("id", "")
     if relative_url.startswith("/"):
