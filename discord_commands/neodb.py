@@ -66,6 +66,7 @@ async def neodb_search(title: str, media_type: Optional[str] = None):
         return cached
     
     # 2. 缓存未命中，发起请求
+    logging.info(f"缓存未命中，正在查询 NeoDB: {query_key}")
     params = {"query": title}
     if media_type:
         params["category"] = media_type
