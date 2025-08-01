@@ -2,15 +2,14 @@ import os
 import asyncio
 import logging
 from utils.gpt_call import gpt_call
-from utils.storage import DictStorageManager, ListStorageManager
+from utils.storage import DictStorageManager
 from utils.save_and_load import save_histories, save_summaries
+from utils.constants import DEFAULT_MODEL
 
 # ============================== #
 # 全局变量与常量定义
 # ============================== #
 SAVEDATA_DIR = "savedata"
-MAX_HISTORY = 100  # 最多保留最近 100 条消息（user+assistant 各算一条）
-SUMMARY_TRIGGER = 100  # 当历史记录超过 100 条消息时，自动进行总结
 
 # 使用StorageManager封装
 history_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "histories.json"))
@@ -51,7 +50,7 @@ async def summarize_history(user_id: str):
         ]
 
         summary_response = await gpt_call(
-            model="gpt-4.1",
+            model=DEFAULT_MODEL,
             messages=summary_prompt,
             temperature=0.3,
             max_tokens=500,

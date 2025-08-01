@@ -5,6 +5,7 @@ from discord.ext import commands
 from utils.gpt_call import gpt_call
 from utils.storage import user_histories, user_summaries
 from utils.save_and_load import save_summaries
+from utils.constants import DEFAULT_MODEL
 
 # ============================== #
 # /summary 指令
@@ -45,14 +46,17 @@ def setup_summary(bot: commands.Bot) -> None:
             #logging.info(f"摘要内容：{summary_prompt}")
 
             summary_response = await gpt_call(
-                model="gpt-4.1",
+                model=DEFAULT_MODEL,
                 messages=summary_prompt,
                 temperature=0.3,
                 max_tokens=1000,
                 timeout=60,
             )
 
-            summary_text = summary_response.choices[0].message.content or ""
+            choices = summary_response.choices or []
+            if not choices or not choices[0].message.content:
+                raise ValueError("GPT 没有返回摘要内容")
+            summary_text = choices[0].message.content.strip()
             
             logging.info(f"摘要成功：{summary_text}")
             
@@ -78,6 +82,6 @@ def setup_summarycheck(bot: commands.Bot) -> None:
 
         if summary_text:
             await interaction.response.send_message(
-                f"📄 这是你的对话摘要：\n\n{summary_text}", ephemeral=True)
+                f"📄 这是你的对话摘要：\n\n```{summary_text}```", ephemeral=True)
         else:
             await interaction.response.send_message("ℹ️ 当前还没有摘要哦！", ephemeral=True)

@@ -4,7 +4,7 @@ import random
 from discord.ext import commands
 from utils.gpt_call import gpt_call
 from utils.storage import user_roles
-from utils.constants import DEFAULT_SYSTEM_PROMPT, TAROT_CARDS
+from utils.constants import DEFAULT_SYSTEM_PROMPT, TAROT_CARDS, DEFAULT_MODEL
 from openai.types.chat import ChatCompletionMessageParam
 
 # ============================== #
@@ -37,7 +37,7 @@ def setup(bot: commands.Bot) -> None:
 
         try:
             response = await gpt_call(
-                model="gpt-4.1",
+                model=DEFAULT_MODEL,
                 messages=messages,
                 temperature=0.9,
                 max_tokens=1000,
@@ -52,4 +52,5 @@ def setup(bot: commands.Bot) -> None:
             
         except Exception as e:
             await interaction.followup.send(f"❌ 出错了：{str(e)}", ephemeral=True)
+            logging.exception("❌ /fortune GPT调用失败")
 

@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 
 # ============================== #
-# buymeacoffee 指令
+# /buymeacoffee 指令
 # ============================== #
 def setup_buymeacoffee(bot: commands.Bot) -> None:
     @bot.tree.command(name="buymeacoffee", description="喜欢我可以请作者喝杯咖啡哦 :3c")
@@ -19,7 +19,7 @@ def setup_buymeacoffee(bot: commands.Bot) -> None:
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 # ============================== #
-# help 指令
+# /help 指令
 # ============================== #
 def setup_help(bot: commands.Bot) -> None:
     @bot.tree.command(name="help", description="列出所有可用指令")

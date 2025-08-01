@@ -10,6 +10,11 @@ from utils.save_and_load import save_roles
 def setup_setrole(bot: commands.Bot) -> None:
     @bot.tree.command(name="setrole", description="设置专属的角色风格，或者希望bot记住的事情")
     async def setrole(interaction: discord.Interaction, prompt: str):
+        
+        if len(prompt) > 1000:
+            await interaction.response.send_message("⚠️ 角色设定太长啦（上限为 1000 字符） >.<", ephemeral=True)
+            return
+
         user_id = str(interaction.user.id)
         user_roles[user_id] = prompt
         save_roles()
@@ -27,7 +32,7 @@ def setup_rolecheck(bot: commands.Bot) -> None:
         user_id = str(interaction.user.id)
         prompt = user_roles.get(user_id)
         if prompt:
-            await interaction.response.send_message(f"📝 你的当前角色设定是：\n\n{prompt}", ephemeral=True)
+            await interaction.response.send_message(f"📝 你的当前角色设定是：\n\n```{prompt}```", ephemeral=True)
         else:
             await interaction.response.send_message("ℹ️ 你还没有设置自定义角色设定。可以通过`/setrole`进行角色设置捏！", ephemeral=True)
 

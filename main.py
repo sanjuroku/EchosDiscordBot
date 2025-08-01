@@ -23,7 +23,7 @@ logging.basicConfig(
 
 # 获取环境变量中的 Token
 TOKEN = os.environ.get("DISCORD_TOKEN") or ""
-if TOKEN is None:
+if not TOKEN:
     raise ValueError(
         "环境变量未设置，请设置 DISCORD_TOKEN")
 

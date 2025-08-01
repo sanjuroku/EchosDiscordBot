@@ -6,7 +6,7 @@ from typing import Optional
 from openai.types.chat import ChatCompletionMessageParam
 
 from utils.gpt_call import gpt_call
-from utils.constants import DEFAULT_SYSTEM_PROMPT, MAX_HISTORY, SUMMARY_TRIGGER
+from utils.constants import DEFAULT_SYSTEM_PROMPT, MAX_HISTORY, SUMMARY_TRIGGER, DEFAULT_MODEL
 from utils.locks import get_user_lock
 from utils.auto_summary import summarize_history
 from utils.save_and_load import save_histories
@@ -114,7 +114,7 @@ def setup(bot: commands.Bot) -> None:
             try:
                 # 调用 GPT
                 response = await gpt_call(
-                    model="gpt-4.1",
+                    model=DEFAULT_MODEL,
                     messages=messages,  # 调用包含摘要的完整消息
                     temperature=0.7,
                     max_tokens=1000,

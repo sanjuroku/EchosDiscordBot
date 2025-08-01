@@ -7,6 +7,7 @@ from discord import Interaction, Embed, app_commands, Color
 from typing import Optional
 from utils.gpt_call import gpt_call
 from utils.embed import get_random_embed_color
+from utils.constants import DEFAULT_MODEL
 
 # ============================== #
 # /steam 指令
@@ -32,31 +33,35 @@ async def get_standard_names_by_gpt(game_name: str) -> Optional[tuple]:
     prompt = ("请你根据下列用户输入的 Steam 游戏名，返回该游戏的标准官方中文名称和英文名称。\n"
               "格式为：\n中文名：xxx\n英文名：yyy\n"
               "用户输入：" + game_name)
-    # 调用现有的 gpt_call
-    response = await gpt_call(model="gpt-4.1",
-                              messages=[{
-                                  "role": "user",
-                                  "content": prompt
-                              }],
-                              temperature=0.1,
-                              max_tokens=50,
-                              timeout=20)
-    logging.info(f"✅ 模型调用成功：{response.model}")
-    logging.info(f"GPT返回：\n{response.choices[0].message.content}")
-    content = (response.choices[0].message.content or "").strip()
-    # 正则匹配
-    zh_match = re.search(r"中文名[:：]\s*(.+)", content)
-    en_match = re.search(r"英文名[:：]\s*(.+)", content)
-    zh_name = zh_match.group(1).strip() if zh_match else None
-    en_name = en_match.group(1).strip() if en_match else None
-    """ logging.info(
-        f"正则匹配结果：\n"
-        f"  中文匹配：{zh_match}\n"
-        f"  英文匹配：{en_match}\n"
-        f"  中文名称：{zh_name}\n"
-        f"  英文名称：{en_name}"
-    ) """
-    return (zh_name, en_name) if zh_name or en_name else None
+    try:
+        # 调用现有的 gpt_call
+        response = await gpt_call(model=DEFAULT_MODEL,
+                                messages=[{
+                                    "role": "user",
+                                    "content": prompt
+                                }],
+                                temperature=0.1,
+                                max_tokens=50,
+                                timeout=20)
+        logging.info(f"✅ 模型调用成功：{response.model}")
+        logging.info(f"GPT返回：\n{response.choices[0].message.content}")
+        content = (response.choices[0].message.content or "").strip()
+        # 正则匹配
+        zh_match = re.search(r"中文名[:：]\s*(.+)", content)
+        en_match = re.search(r"英文名[:：]\s*(.+)", content)
+        zh_name = zh_match.group(1).strip() if zh_match else None
+        en_name = en_match.group(1).strip() if en_match else None
+        """ logging.info(
+            f"正则匹配结果：\n"
+            f"  中文匹配：{zh_match}\n"
+            f"  英文匹配：{en_match}\n"
+            f"  中文名称：{zh_name}\n"
+            f"  英文名称：{en_name}"
+        ) """
+        return (zh_name, en_name) if zh_name or en_name else None
+    except Exception as e:
+        logging.exception("❌ GPT 获取标准游戏名失败")
+        return None
 
 
 # 2. 封装 steam storesearch 搜索
