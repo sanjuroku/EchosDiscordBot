@@ -23,5 +23,5 @@ def set_neodb_cache(query_key: str, data: list):
         "data": data,
         "timestamp": time.time()
     }
-    logging.info(f" set_neodb_cache 当前 neodb_cache ：{neodb_cache}")
+    logging.info(f" set_neodb_cache 当前 neodb_cache ：{len(neodb_cache)}")
     save_neodb_cache()
