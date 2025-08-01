@@ -20,7 +20,7 @@ media_type_choices = [
     app_commands.Choice(name="图书 Book", value="book"),
     app_commands.Choice(name="电影 Movie", value="movie"),
     app_commands.Choice(name="影剧 TV Series", value="tv"),
-    app_commands.Choice(name="音乐 Album", value="album"),
+    app_commands.Choice(name="音乐 Music", value="music"),
 ]
 
 NEODB_SEARCH_API = "https://neodb.social/api/catalog/search"
@@ -80,7 +80,7 @@ def build_neodb_embed(item) -> Embed:
         embed.set_image(url=cover_url)
     
     # 根据类型选择字段
-    media_type = item.get("type")
+    media_type = item.get("category")
 
     if media_type == "book":
         fields = [
@@ -96,7 +96,7 @@ def build_neodb_embed(item) -> Embed:
             ("评分", f"{item.get('rating', 'N/A')}（{item.get('rating_count', 0)}人评价）", True),
             ("标签", ", ".join(item.get("tags", [])) or "暂无", False),
         ]
-    elif media_type == "album":
+    elif media_type == "music":
         fields = [
             ("类型", media_type, True),
             ("艺人", ", ".join(item.get("artist", [])) or "未知", True),
