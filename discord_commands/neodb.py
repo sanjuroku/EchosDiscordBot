@@ -27,7 +27,7 @@ NEODB_SEARCH_API = "https://neodb.social/api/catalog/search"
 
 async def neodb_search(title: str, media_type: Optional[str] = None):
     
-    params = {"q": title}
+    params = {"query": title}
     if media_type:
         params["type"] = media_type
 
