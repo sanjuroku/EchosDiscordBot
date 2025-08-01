@@ -23,7 +23,7 @@ media_type_choices = [
     app_commands.Choice(name="音乐 Album", value="album"),
 ]
 
-NEODB_SEARCH_API = "https://neodb.social/api/search"
+NEODB_SEARCH_API = "https://neodb.social/api/v1/search"
 
 async def neodb_search(title: str, media_type: Optional[str] = None):
     params = {"q": title}
@@ -57,7 +57,7 @@ def build_neodb_embed(item) -> Embed:
         title_display += f" / {original_title}"
 
     embed = Embed(title=f"🌠 {title_display}",
-                  description=description,
+                  description=description[:1000],
                   url=url,
                   color=get_random_embed_color())
     
