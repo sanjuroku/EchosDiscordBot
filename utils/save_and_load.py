@@ -1,5 +1,6 @@
 import os
 import time
+import logging
 from utils.storage import DictStorageManager
 
 # ============================== #
@@ -67,6 +68,7 @@ def save_reddit_cache():
         for key, val in reddit_cache.items()
         if now - val["timestamp"] < CACHE_DURATION
     }
+    logging.info(f"💾 正在保存 Reddit 缓存，共 {len(valid_cache)} 条")
     reddit_cache_storage.set("cache", valid_cache)
 
 def save_reddit_sent_cache():
@@ -94,6 +96,7 @@ def save_neodb_cache():
         for key, val in neodb_cache.items()
         if now - val["timestamp"] < CACHE_DURATION
     }
+    logging.info(f"💾 正在保存 NeoDB 缓存，共 {len(valid_cache)} 条")
     neodb_cache_storage.set("cache", valid_cache)
 
 # 载入缓存

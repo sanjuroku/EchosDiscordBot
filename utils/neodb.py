@@ -1,4 +1,5 @@
 import time
+import logging
 from typing import Optional
 from utils.save_and_load import save_neodb_cache, CACHE_DURATION
 
@@ -9,6 +10,7 @@ neodb_cache = {}
 # Neodb 相关缓存与函数
 # ============================== #
 def get_neodb_cached_result(query_key: str):
+    logging.info(f"✅ 命中缓存：{query_key}")
     entry = neodb_cache.get(query_key)
     if entry and (time.time() - entry["timestamp"]) < CACHE_DURATION:
         return entry["data"]
