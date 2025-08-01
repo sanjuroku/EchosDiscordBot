@@ -93,7 +93,7 @@ def save_neodb_cache():
     global neodb_cache
     now = time.time()
     
-    logging.info(f"🧪 当前内存中 neodb_cache 共 {len(neodb_cache)} 项")
+    logging.info(f" save_neodb_cache 当前 neodb_cache ：{neodb_cache}")
 
     for key, val in neodb_cache.items():
         age = now - val.get("timestamp", 0)
@@ -105,8 +105,8 @@ def save_neodb_cache():
         if now - val.get("timestamp", 0) < CACHE_DURATION
     }
 
-    logging.info(f"💾 正在保存 NeoDB 缓存，共 {len(neodb_cache)} 条")
-    neodb_cache_storage.set("cache", neodb_cache)
+    logging.info(f"💾 正在保存 NeoDB 缓存，共 {len(valid_cache)} 条")
+    neodb_cache_storage.set("cache", valid_cache)
 
 # 载入缓存
 def load_neodb_cache():
@@ -119,3 +119,4 @@ def load_neodb_cache():
         for key, val in raw.items()
         if now - val.get("timestamp", 0) < CACHE_DURATION
     }
+    logging.info(f" load_neodb_cache 当前 neodb_cache ：{neodb_cache}")
