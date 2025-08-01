@@ -105,8 +105,8 @@ def save_neodb_cache():
         if now - val.get("timestamp", 0) < CACHE_DURATION
     }
 
-    logging.info(f"💾 正在保存 NeoDB 缓存，共 {len(valid_cache)} 条")
-    neodb_cache_storage.set("cache", valid_cache)
+    logging.info(f"💾 正在保存 NeoDB 缓存，共 {len(neodb_cache)} 条")
+    neodb_cache_storage.set("cache", neodb_cache)
 
 # 载入缓存
 def load_neodb_cache():
