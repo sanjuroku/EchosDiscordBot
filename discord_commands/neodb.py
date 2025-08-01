@@ -54,7 +54,13 @@ def build_neodb_embed(item) -> Embed:
     subtitle = attributes.get("sub_title")
     description = attributes.get("summary") or "暂无简介"
     cover_url = attributes.get("cover_image")
-    url = item.get("url") or f"https://neodb.social{item.get('id', '')}"
+    # 强制拼接完整 URL（避免返回的 "url" 是相对路径）
+    relative_url = item.get("url") or item.get("id", "")
+    if relative_url.startswith("/"):
+        url = f"https://neodb.social{relative_url}"
+    else:
+        url = relative_url  # 已经是完整 URL
+
 
     title_display = f"{title}"
     if subtitle:
