@@ -92,11 +92,19 @@ def load_reddit_sent_cache():
 def save_neodb_cache():
     global neodb_cache
     now = time.time()
+    
+    logging.info(f"🧪 当前内存中 neodb_cache 共 {len(neodb_cache)} 项")
+
+    for key, val in neodb_cache.items():
+        age = now - val.get("timestamp", 0)
+        logging.info(f"🔍 key: {key}, 缓存时间: {val.get('timestamp', 0)}, 年龄: {age:.2f} 秒")
+
     valid_cache = {
         key: val
         for key, val in neodb_cache.items()
-        if now - val["timestamp"] < CACHE_DURATION
+        if now - val.get("timestamp", 0) < CACHE_DURATION
     }
+
     logging.info(f"💾 正在保存 NeoDB 缓存，共 {len(valid_cache)} 条")
     neodb_cache_storage.set("cache", valid_cache)
 
