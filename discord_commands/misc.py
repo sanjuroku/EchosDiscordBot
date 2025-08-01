@@ -27,7 +27,7 @@ def setup_help(bot: commands.Bot) -> None:
         msg = ("可用指令列表：\n"
             "💬 `/ask <问题> [可选：翻译目标语言]` - 咋办\n"
             "💭 `/choose <选项1> <选项2> ...` - 让咋办帮忙选选\n"
-            "🔮 `/tarot <困惑>` - 抽一张塔罗牌解读你的困惑\n"
+            "🔮 `/tarot <困惑> [可选：抽牌数]` - 抽一张或多张塔罗牌解读你的困惑\n"
             "🧙‍♀️ `/fortune` - 占卜你的今日运势并解读\n"
             "🐾 `/aww <subreddit>` - 从Reddit上随机抽一只可爱动物\n"
             "🎮 `/steam <游戏名称> [可选：地区]` - 查询 Steam 游戏信息\n"
