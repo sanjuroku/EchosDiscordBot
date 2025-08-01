@@ -50,7 +50,12 @@ def main():
         load_reddit_cache()
         load_reddit_sent_cache()
 
+        logging.info("✅ 所有模块已成功加载。")
+        logging.info("🔄Bot 正在启动...")
+        
         bot.run(TOKEN)
+        
+        logging.info("✅Bot 启动成功。")
         
     except Exception as e:
         logging.error(f"❌ 启动 bot 失败：{e}")

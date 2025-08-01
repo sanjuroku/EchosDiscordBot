@@ -51,7 +51,7 @@ def setup(bot: commands.Bot) -> None:
         async with lock:
             # ============ 翻译模式 ============ #
             lang = None
-            custom_lang = translate_to_custom_lang.strip() if isinstance(translate_to_custom_lang, str) else None
+            custom_lang = translate_to_custom_lang.strip() if isinstance(translate_to_custom_lang, str) and translate_to_custom_lang.strip() else None
             lang = custom_lang or (translate_to.value if translate_to else None)
 
             if lang:

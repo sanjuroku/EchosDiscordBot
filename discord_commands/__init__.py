@@ -1,5 +1,7 @@
 from discord_commands import ask, change_status, choose, role, tarot, fortune, steam, timezone, aww, summary, reset, misc
 
+__all__ = ["setup_all"]
+
 def setup_all(bot):
     ask.setup(bot)
     choose.setup(bot)
