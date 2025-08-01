@@ -1,4 +1,5 @@
 import os
+import time
 from utils.storage import DictStorageManager
 
 # ============================== #
@@ -6,6 +7,7 @@ from utils.storage import DictStorageManager
 # ============================== #
 CONFIG_DIR = "config"
 SAVEDATA_DIR = "savedata"
+CACHE_DURATION = 1800 # 缓存持续时间，单位为秒（30分钟）
 
 # 使用StorageManager封装
 history_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "histories.json"))
@@ -13,6 +15,7 @@ summary_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "summaries.json"
 role_storage = DictStorageManager(os.path.join(CONFIG_DIR, "roles.json"))
 reddit_cache_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "reddit_cache.json"))
 reddit_sent_cache_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "reddit_sent_cache.json"))
+neodb_cache_storage = DictStorageManager(os.path.join(SAVEDATA_DIR, "neodb_cache.json"))
 
 # ============================== #
 # 历史记录持久化函数
@@ -58,7 +61,13 @@ def load_roles():
 # Reddit 缓存持久化函数
 # ============================== #
 def save_reddit_cache():
-    reddit_cache_storage.set("cache", reddit_cache)
+    now = time.time()
+    valid_cache = {
+        key: val
+        for key, val in reddit_cache.items()
+        if now - val["timestamp"] < CACHE_DURATION
+    }
+    reddit_cache_storage.set("cache", valid_cache)
 
 def save_reddit_sent_cache():
     # 将 set 转为 list 存储
@@ -73,3 +82,28 @@ def load_reddit_sent_cache():
     global reddit_sent_cache
     raw = reddit_sent_cache_storage.get("sent_cache", {})
     reddit_sent_cache = {uid: set(urls) for uid, urls in raw.items()}
+
+# ============================== #
+# Neodb 缓存持久化函数
+# ============================== #
+# 保存缓存
+def save_neodb_cache():
+    now = time.time()
+    valid_cache = {
+        key: val
+        for key, val in neodb_cache.items()
+        if now - val["timestamp"] < CACHE_DURATION
+    }
+    neodb_cache_storage.set("cache", valid_cache)
+
+# 载入缓存
+def load_neodb_cache():
+    global neodb_cache
+    raw = neodb_cache_storage.get("cache", {})
+    now = time.time()
+    # 只加载有效的缓存
+    neodb_cache = {
+        key: val
+        for key, val in raw.items()
+        if now - val.get("timestamp", 0) < CACHE_DURATION
+    }

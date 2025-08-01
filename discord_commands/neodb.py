@@ -7,6 +7,7 @@ from discord import Interaction, Embed, app_commands, SelectOption
 from discord.ui import Select, View
 from typing import Optional
 from utils.embed import get_random_embed_color
+from utils.neodb import get_neodb_cached_result, set_neodb_cache
 
 # ============================== #
 # /neodb 指令
@@ -55,7 +56,16 @@ media_type_choices = [
 NEODB_SEARCH_API = "https://neodb.social/api/catalog/search"
 
 async def neodb_search(title: str, media_type: Optional[str] = None):
+    # 创建缓存 key
+    query_key = f"{title.strip().lower()}::{media_type or 'any'}"
     
+    # 1. 先查缓存
+    cached = get_neodb_cached_result(query_key)
+    if cached:
+        logging.info(f"✅ 命中缓存：{query_key}")
+        return cached
+    
+    # 2. 缓存未命中，发起请求
     params = {"query": title}
     if media_type:
         params["category"] = media_type
@@ -74,7 +84,12 @@ async def neodb_search(title: str, media_type: Optional[str] = None):
                 raise Exception(f"NeoDB API 请求失败，状态码: {resp.status}，内容: {text}")
 
             data = await resp.json()
-            return data.get("data", [])
+            results = data.get("data", [])
+            
+            # 3. 存入缓存
+            set_neodb_cache(query_key, results)
+            
+            return results
 
 def build_neodb_embed(item) -> Embed:
     title = item.get("title") or "未知标题"

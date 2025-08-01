@@ -9,7 +9,7 @@ from discord.ext import commands
 import discord_commands
 import events
 from events.trigger_events import load_triggers_off
-from utils.save_and_load import load_histories, load_summaries, load_roles, load_reddit_cache, load_reddit_sent_cache
+from utils.save_and_load import load_histories, load_summaries, load_roles, load_reddit_cache, load_reddit_sent_cache, load_neodb_cache
 
 # 初始化写入日志
 logging.basicConfig(
@@ -49,6 +49,7 @@ def main():
         load_triggers_off()
         load_reddit_cache()
         load_reddit_sent_cache()
+        load_neodb_cache()
 
         logging.info("✅ 所有模块已成功加载。")
         logging.info("🔄Bot 正在启动...")
