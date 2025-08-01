@@ -70,7 +70,7 @@ def build_neodb_embed(item) -> Embed:
 
     # 创建 Embed
     embed = Embed(title=f"🌠 {title_display}",
-                  description=description[:1000],
+                  description=description,
                   url=url,
                   color=get_random_embed_color())
     
@@ -78,18 +78,72 @@ def build_neodb_embed(item) -> Embed:
     cover_url = item.get("cover_image_url")
     if cover_url:
         embed.set_image(url=cover_url)
+    
+    # 根据类型选择字段
+    media_type = item.get("category") or item.get("type")
 
-    fields = [
-        ("类型", item.get("category", "未知"), True),
-        ("年份", str(item.get("year", "未知")), True),
-        ("时长", item.get("duration", "未知"), True),
-        ("导演", ", ".join(item.get("director", [])) or "未知", True),
-        ("编剧", ", ".join(item.get("playwright", [])) or "未知", True),
-        ("演员", ", ".join(item.get("actor", [])[:5]) + "..." if len(item.get("actor", [])) > 5 else ", ".join(item.get("actor", [])) or "未知", False),
-        ("评分", f"{item.get('rating', 'N/A')}（{item.get('rating_count', 0)}人评价）", True),
-        ("标签", ", ".join(item.get("tags", [])[:6]) + "..." if len(item.get("tags", [])) > 6 else ", ".join(item.get("tags", [])) or "暂无", False),
-        ("IMDb", f"[{item['imdb']}](https://www.imdb.com/title/{item['imdb']})" if item.get("imdb") else "无", True),
-    ]
+    if media_type == "book":
+        fields = [
+            ("类型", media_type, True),
+            ("年份", str(item.get("pub_year", "未知")), True),
+            ("装帧", item.get("binding", "未知"), True),
+            ("作者", ", ".join(item.get("author", [])) or "未知", True),
+            ("译者", ", ".join(item.get("translator", [])) or "无", True),
+            ("出版社", item.get("pub_house", "未知"), True),
+            ("页数", str(item.get("pages", "未知")), True),
+            ("ISBN", item.get("isbn", "未知"), True),
+            ("定价", item.get("price", "未知"), True),
+            ("评分", f"{item.get('rating', 'N/A')}（{item.get('rating_count', 0)}人评价）", True),
+            ("标签", ", ".join(item.get("tags", [])[:6]) + "..." if len(item.get("tags", [])) > 6 else ", ".join(item.get("tags", [])) or "暂无", False),
+        ]
+    elif media_type == "album":
+        fields = [
+            ("类型", media_type, True),
+            ("艺人", ", ".join(item.get("artist", [])) or "未知", True),
+            ("厂牌", ", ".join(item.get("company", [])) or "未知", True),
+            ("发行日期", item.get("release_date", "未知"), True),
+            ("曲目数", f"{len(item.get('track_list', '').splitlines())} 首" if item.get("track_list") else "未知", True),
+            ("曲目列表", "\n".join(item.get("track_list", "").splitlines()[:5]) + "\n..." if item.get("track_list") and len(item.get("track_list").splitlines()) > 5 else item.get("track_list", "暂无") or "暂无", False),
+            ("评分", f"{item.get('rating', 'N/A')}（{item.get('rating_count', 0)}人评价）", True),
+            ("标签", ", ".join(item.get("tags", [])[:6]) + "..." if len(item.get("tags", [])) > 6 else ", ".join(item.get("tags", [])) or "暂无", False),
+            ("条形码", item.get("barcode", "无"), True),
+        ]
+    elif media_type == "tv":
+        fields = [
+            ("导演", ", ".join(item.get("director", [])) or "未知", True),
+            ("编剧", ", ".join(item.get("playwright", [])) or "未知", True),
+            ("主演", ", ".join(item.get("actor", [])[:5]) + "..." if len(item.get("actor", [])) > 5 else ", ".join(item.get("actor", [])) or "未知", False),
+            ("类型", ", ".join(item.get("genre", [])) or "未知", True),
+            ("地区", ", ".join(item.get("area", [])) or "未知", True),
+            ("语言", ", ".join(item.get("language", [])) or "未知", True),
+            ("首播年份", str(item.get("year", "未知")), True),
+            ("季数", f"第 {item.get('season_number', '?')} 季", True),
+            ("集数", str(item.get("episode_count", "未知")), True),
+            ("IMDb", f"[{item['imdb']}](https://www.imdb.com/title/{item['imdb']})" if item.get("imdb") else "无", True),
+            ("官网", f"[点击访问]({item['site']})" if item.get("site") else "无", True),
+            ("评分", f"{item.get('rating', 'N/A')}（{item.get('rating_count', 0)}人评价）", True),
+            ("标签", ", ".join(item.get("tags", [])[:6]) + "..." if len(item.get("tags", [])) > 6 else ", ".join(item.get("tags", [])) or "暂无", False),
+        ]
+    else:
+        fields = [
+            ("类型", media_type or "未知", True),
+            ("年份", str(item.get("year", "未知")), True),
+            ("时长", item.get("duration", "未知"), True),
+            ("导演", ", ".join(item.get("director", [])) or "未知", True),
+            ("编剧", ", ".join(item.get("playwright", [])) or "未知", True),
+            ("演员", ", ".join(item.get("actor", [])[:5]) + "..." if len(item.get("actor", [])) > 5 else ", ".join(item.get("actor", [])) or "未知", False),
+            ("评分", f"{item.get('rating', 'N/A')}（{item.get('rating_count', 0)}人评价）", True),
+            ("标签", ", ".join(item.get("tags", [])[:6]) + "..." if len(item.get("tags", [])) > 6 else ", ".join(item.get("tags", [])) or "暂无", False),
+            ("IMDb", f"[{item['imdb']}](https://www.imdb.com/title/{item['imdb']})" if item.get("imdb") else "无", True),
+        ]
+
+    # 追加外链（如豆瓣）
+    douban_url = next(
+        (ext.get("url") for ext in item.get("external_resources", []) if "douban.com" in ext.get("url", "")),
+        None
+    )
+    if douban_url:
+        fields.append(("豆瓣链接", f"[点击查看]({douban_url})", False))
 
     for name, value, inline in fields:
         if value and value != "未知":
