@@ -16,9 +16,9 @@ def setup(bot: commands.Bot) -> None:
     
     # spread 类型选择
     spread_choices = [
-        app_commands.Choice(name="单张牌（直接解答）", value="1"),
-        app_commands.Choice(name="三张牌（过去 / 现在 / 未来）", value="3"),
-        app_commands.Choice(name="五张牌（综合分析）", value="5"),
+        app_commands.Choice(name="单张牌", value="1"),
+        app_commands.Choice(name="三张牌", value="3"),
+        app_commands.Choice(name="五张牌", value="5"),
     ]
     
     @bot.tree.command(name="tarot", description="抽一张或多张塔罗牌解读你的困惑")
@@ -60,7 +60,7 @@ def setup(bot: commands.Bot) -> None:
             f"我抽到的塔罗牌如下（请注意正逆位）：\n{card_text_for_prompt}\n\n"
             f"请结合这些牌的牌义进行解读。\n"
             f"- 如果是三张牌，请从过去/现在/未来的角度解读；\n"
-            f"- 如果是五张牌，请根据疑惑选取牌阵综合分析；\n"
+            f"- 如果是五张牌，请根据我的疑惑自由选取合适的牌阵进行综合分析；\n"
             f"- 如果只有一张，请专注该牌的象征意义并对我的困惑给出详细回应。"
         )
 
