@@ -31,8 +31,7 @@ def save_neodb_cache():
         if now - val.get("timestamp", 0) < CACHE_DURATION
     }
     
-    logging.info(f" save_neodb_cache 当前 neodb_cache ：{neodb_cache}")
-    logging.info(f" save_neodb_cache 当前 valid_cache ：{valid_cache}")
+    logging.info(f" save_neodb_cache 当前 neodb_cache ：{len(neodb_cache)}")
 
     logging.info(f"💾 正在保存 NeoDB 缓存，共 {len(valid_cache)} 条")
     neodb_cache_storage.set("cache", valid_cache)
@@ -48,14 +47,14 @@ def load_neodb_cache():
         for key, val in raw.items()
         if now - val.get("timestamp", 0) < CACHE_DURATION
     }
-    logging.info(f" load_neodb_cache 当前 neodb_cache ：{neodb_cache}")
+    logging.info(f" load_neodb_cache 当前 neodb_cache ：{len(neodb_cache)}")
 
 # ============================== #
 # Neodb 相关缓存与函数
 # ============================== #
 def get_neodb_cached_result(query_key: str):
     logging.info(f"✅ get_neodb_cached_result：{query_key}")
-    logging.info(f" get_neodb_cached_result 当前 neodb_cache ：{neodb_cache}")
+    logging.info(f" get_neodb_cached_result 当前 neodb_cache ：{len(neodb_cache)}")
     entry = neodb_cache.get(query_key)
     if entry and (time.time() - entry["timestamp"]) < CACHE_DURATION:
         return entry["data"]
