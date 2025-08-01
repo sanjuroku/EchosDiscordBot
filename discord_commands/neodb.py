@@ -80,7 +80,7 @@ def build_neodb_embed(item) -> Embed:
         embed.set_image(url=cover_url)
     
     # 根据类型选择字段
-    media_type = item.get("category") or item.get("type")
+    media_type = item.get("type")
 
     if media_type == "book":
         fields = [
@@ -106,7 +106,6 @@ def build_neodb_embed(item) -> Embed:
             ("曲目列表", "\n".join(item.get("track_list", "").splitlines()[:5]) + "\n..." if item.get("track_list") and len(item.get("track_list").splitlines()) > 5 else item.get("track_list", "暂无") or "暂无", False),
             ("评分", f"{item.get('rating', 'N/A')}（{item.get('rating_count', 0)}人评价）", True),
             ("标签", ", ".join(item.get("tags", [])) or "暂无", False),
-            ("条形码", item.get("barcode", "无"), True),
         ]
     elif media_type == "tv":
         fields = [
