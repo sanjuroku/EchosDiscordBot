@@ -19,6 +19,7 @@ region_choices = [
     app_commands.Choice(name="美区（美元）", value="us"),
     app_commands.Choice(name="日区（日元）", value="jp"),
     app_commands.Choice(name="港区（港币）", value="hk"),
+    app_commands.Choice(name="台区（新台币）", value="tw"),
     app_commands.Choice(name="马来西亚区（林吉特）", value="my"),
     app_commands.Choice(name="加拿大区（加元）", value="ca"),
     app_commands.Choice(name="欧洲区（欧元）", value="eu"),
