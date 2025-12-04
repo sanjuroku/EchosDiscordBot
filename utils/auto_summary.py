@@ -68,7 +68,7 @@ async def summarize_history(user_id: str):
         # 清除早期对话，只保留最后 50 条
         preserved = history[-50:]
         history_storage.data[user_id] = preserved
-        history_storage.data.save()
+        history_storage.save()
 
         logging.info(f"用户 {user_id} 的历史已清理，仅保留最近 {len(preserved)} 条对话")
 
