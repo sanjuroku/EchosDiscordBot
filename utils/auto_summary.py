@@ -3,7 +3,7 @@ import asyncio
 import logging
 from utils.gpt_call import gpt_call
 from utils.storage import DictStorageManager
-from utils.save_and_load import save_histories, save_summaries
+from utils.save_and_load import save_summaries
 from utils.constants import DEFAULT_MODEL
 
 # ============================== #
@@ -23,7 +23,7 @@ user_summaries = summary_storage.data  # 存储用户对话摘要
 # ============================== #
 async def summarize_history(user_id: str):
     """为指定用户生成对话摘要"""
-    history = user_histories.get(user_id, [])
+    history = history_storage.data.get(user_id, [])
     if not history:
         return
 
@@ -61,15 +61,14 @@ async def summarize_history(user_id: str):
         
         logging.info(f"摘要成功：{summary_text}")
         
-        user_summaries[user_id] = summary_text
-        await asyncio.to_thread(save_summaries)
+        summary_storage.data[user_id] = summary_text
+        await asyncio.to_thread(summary_storage.save)
         logging.info(f"✅ 用户 {user_id} 摘要完成")
 
         # 清除早期对话，只保留最后 50 条
         preserved = history[-50:]
-        user_histories[user_id] = preserved
-        history_storage.data = user_histories
-        save_histories()
+        history_storage.data[user_id] = preserved
+        history_storage.data.save()
 
         logging.info(f"用户 {user_id} 的历史已清理，仅保留最近 {len(preserved)} 条对话")
 
