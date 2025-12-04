@@ -65,8 +65,8 @@ async def summarize_history(user_id: str):
         await asyncio.to_thread(summary_storage.save)
         logging.info(f"✅ 用户 {user_id} 摘要完成")
 
-        # 清除早期对话，只保留最后 30 条
-        history_storage.data[user_id] = history_storage.data[user_id][-30:]
+        # 清除早期对话，只保留最后 10 条
+        history_storage.data[user_id] = history_storage.data[user_id][-10:]
         await asyncio.to_thread(history_storage.save)
 
         logging.info(f"用户 {user_id} 的历史已清理，仅保留最近 {len(history_storage.data[user_id])} 条对话")
