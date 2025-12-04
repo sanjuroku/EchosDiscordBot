@@ -127,7 +127,7 @@ def setup(bot: commands.Bot) -> None:
                 reply = response.choices[0].message.content or "❌ GPT 没有返回任何内容哦 >.<"
 
                 # 添加 AI 回复到历史
-                history_storage.data[user_id] = history_storage.data[user_id].append({"role": "assistant", "content": reply})
+                history_storage.data[user_id].append({"role": "assistant", "content": reply})
                 # 保存
                 await asyncio.to_thread(save_histories)
 
