@@ -127,14 +127,12 @@ def setup(bot: commands.Bot) -> None:
                 reply = response.choices[0].message.content or "❌ GPT 没有返回任何内容哦 >.<"
 
                 # 添加 AI 回复到历史
-                history.append({"role": "assistant", "content": reply})
-
-                # 限制历史长度 & 保存
-                history_storage.data[user_id] = history
+                history_storage.data[user_id] = history_storage.data[user_id].append({"role": "assistant", "content": reply})
+                # 保存
                 await asyncio.to_thread(save_histories)
 
                 # 如果历史太长则先摘要
-                if len(history) >= SUMMARY_TRIGGER:
+                if len(history_storage.data[user_id]) >= SUMMARY_TRIGGER:
                     logging.info(f"🔍 当前完整历史：{len(history_storage.data[user_id])}")
                     await summarize_history(user_id)
 
