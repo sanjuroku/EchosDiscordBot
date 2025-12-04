@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import logging
 from discord.ext import commands
@@ -86,7 +87,7 @@ def setup(bot: commands.Bot) -> None:
             
             # ============ 普通提问模式 ============ #
             # 获取历史记录
-            history = user_histories.get(user_id, [])
+            history = history_storage.data.get(user_id, [])
             history.append({"role": "user", "content": prompt})
 
             # 裁剪用于聊天上下文
@@ -129,16 +130,16 @@ def setup(bot: commands.Bot) -> None:
                 history.append({"role": "assistant", "content": reply})
 
                 # 限制历史长度 & 保存
-                user_histories[user_id] = history
-                save_histories()
+                history_storage.data[user_id] = history
+                await asyncio.to_thread(save_histories)
 
                 # 如果历史太长则先摘要
                 if len(history) >= SUMMARY_TRIGGER:
-                    logging.info(f"🔍 当前完整历史：{len(user_histories[user_id])}")
+                    logging.info(f"🔍 当前完整历史：{len(history_storage.data[user_id])}")
                     await summarize_history(user_id)
 
                 await interaction.followup.send(reply)
-                logging.info(f"✅ 回复已发送给用户 {user_id}，当前历史记录条数: {len(history)}")
+                logging.info(f"✅ 回复已发送给用户 {user_id}，当前历史记录条数: {len(history_storage.data[user_id])}")
 
             except Exception as e:
                 logging.error(f"❌ GPT调用出错：{e}")
