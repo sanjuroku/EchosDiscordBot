@@ -87,11 +87,10 @@ def setup(bot: commands.Bot) -> None:
             
             # ============ 普通提问模式 ============ #
             # 获取历史记录
-            history = history_storage.data.get(user_id, [])
-            history.append({"role": "user", "content": prompt})
+            history_storage.data[user_id].append({"role": "user", "content": prompt})
 
             # 裁剪用于聊天上下文
-            chat_context = history[-MAX_HISTORY:]
+            chat_context = history_storage.data[user_id][-MAX_HISTORY:]
 
             # 构造 messages
             messages: list[ChatCompletionMessageParam] = []
