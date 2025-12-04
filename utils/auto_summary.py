@@ -66,11 +66,10 @@ async def summarize_history(user_id: str):
         logging.info(f"✅ 用户 {user_id} 摘要完成")
 
         # 清除早期对话，只保留最后 30 条
-        preserved = history[-30:]
-        history_storage.data[user_id] = preserved
+        history_storage.data[user_id] = history_storage.data[user_id][-30:]
         await asyncio.to_thread(history_storage.save)
 
-        logging.info(f"用户 {user_id} 的历史已清理，仅保留最近 {len(preserved)} 条对话")
+        logging.info(f"用户 {user_id} 的历史已清理，仅保留最近 {len(history_storage.data[user_id])} 条对话")
 
     except Exception as e:
         logging.warning(f"⚠️ 为用户 {user_id} 生成摘要失败：{e}")
