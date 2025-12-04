@@ -2,8 +2,8 @@ import discord
 # ============================== #
 # 全局变量与常量定义
 # ============================== #
-MAX_HISTORY = 100  # 最多保留最近 100 条消息（user+assistant 各算一条）
-SUMMARY_TRIGGER = 50  # 当历史记录超过 100 条消息时，自动进行总结
+MAX_HISTORY = 70  # 最多保留最近 70 条消息（user+assistant 各算一条）
+SUMMARY_TRIGGER = 50  # 当历史记录超过 50 条消息时，自动进行总结
 DEFAULT_MODEL = "gpt-4.1"
 
 # 默认 System Prompt

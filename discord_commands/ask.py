@@ -139,7 +139,7 @@ def setup(bot: commands.Bot) -> None:
                     await summarize_history(user_id)
 
                 await interaction.followup.send(reply)
-                logging.info(f"✅ 回复已发送给用户 {user_id}，当前历史记录条数: {len(history_storage.data[user_id])}")
+                logging.info(f"✅ 回复已发送给用户 {user_id}，当前完整历史：{len(history_storage.data[user_id])}")
 
             except Exception as e:
                 logging.error(f"❌ GPT调用出错：{e}")

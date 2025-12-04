@@ -23,13 +23,13 @@ user_summaries = summary_storage.data  # 存储用户对话摘要
 # ============================== #
 async def summarize_history(user_id: str):
     """为指定用户生成对话摘要"""
-    history = history_storage.data.get(user_id, [])
+    history = history_storage.data.setdefault(user_id, [])
     if not history:
         return
 
     try:
         logging.info(f"正在为用户 {user_id} 生成摘要...")
-        logging.info(f"摘要开始前的历史内容：{len(history)}")
+        logging.info(f"摘要开始前的历史内容：{len(history_storage.data[user_id])}")
         
         history_text = "\n".join([
             f"User：{msg['content']}\n" if msg["role"] == "user" else f"Assistant：{msg['content']}\n"
@@ -68,7 +68,7 @@ async def summarize_history(user_id: str):
         # 清除早期对话，只保留最后 30 条
         preserved = history[-30:]
         history_storage.data[user_id] = preserved
-        history_storage.save()
+        await asyncio.to_thread(history_storage.save)
 
         logging.info(f"用户 {user_id} 的历史已清理，仅保留最近 {len(preserved)} 条对话")
 
